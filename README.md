@@ -1,8 +1,10 @@
 # AI_navigation
 Final Introduction to AI project: Waze
 
+# instruction
+to run the program, activate myenv
 
-
+# instructions for graphhopper-maps (unused, ignore but dont delete):
 cd graphhopper-maps
 
 Install Node Version Manager (nvm): 
