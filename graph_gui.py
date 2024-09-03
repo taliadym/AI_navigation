@@ -1,5 +1,6 @@
 import pygame
 import networkx as nx
+import math
 
 # Define the GraphVisualizer class
 class GraphVisualizer:
@@ -26,7 +27,33 @@ class GraphVisualizer:
         self.node_radius = 10  # Radius of nodes
         self.font = pygame.font.SysFont(None, 24)
 
-    def draw_graph(self, colors):
+        # Load an image to display over an edge
+        self.car_image = pygame.image.load('car.png')  # Update path to your image
+        self.car_image = pygame.transform.scale(self.car_image, (80, 80))  # Scale the image to fit
+
+    def draw_car_on_edge(self, edge):
+        start_pos = self.positions[edge[0]]
+        end_pos = self.positions[edge[1]]
+        start_screen_pos = self.to_screen(start_pos)
+        end_screen_pos = self.to_screen(end_pos)
+
+        # Calculate the midpoint of the edge
+        midpoint = ((start_screen_pos[0] + end_screen_pos[0]) // 2,
+                    (start_screen_pos[1] + end_screen_pos[1]) // 2)
+
+        # Calculate the angle of the edge in degrees
+        angle = math.degrees(math.atan2(end_screen_pos[0] - start_screen_pos[0],
+                             end_screen_pos[1] - start_screen_pos[1]))
+
+        # Rotate the car image based on the calculated angle
+        rotated_car = pygame.transform.rotate(self.car_image,
+                                              angle)  # Negative angle to adjust for Pygame's rotation direction
+
+        # Blit (draw) the rotated car image at the midpoint of the edge
+        rotated_rect = rotated_car.get_rect(center=midpoint)
+        self.screen.blit(rotated_car, rotated_rect)
+
+    def draw_graph(self, colors, d_edge_for_car):
         # Clear the screen with a white background
         self.screen.fill((255, 255, 255))
 
@@ -36,12 +63,8 @@ class GraphVisualizer:
             end_pos = self.positions[edge[1]]
             pygame.draw.line(self.screen, colors[edge],
                              self.to_screen(start_pos), self.to_screen(end_pos), 2)
+        self.draw_car_on_edge(d_edge_for_car)
 
-        # Draw nodes
-        # for node in self.graph.nodes():
-        #     pos = self.positions[node]
-        #     pygame.draw.circle(self.screen, self.node_color,
-        #                        self.to_screen(pos), self.node_radius)
         # Draw nodes
         for node in self.graph.nodes():
             pos = self.positions[node]
@@ -51,15 +74,13 @@ class GraphVisualizer:
             if node == self.src_node:
                 color = (0, 255, 0)  # Green color for source node
                 pygame.draw.circle(
-                    self.screen, color, self.to_screen(pos), self.node_radius + 5, 3
-                )  # Add outline effect
+                    self.screen, color, self.to_screen(pos), self.node_radius + 5, 3)
                 self.draw_text("Starting Point", screen_pos)
 
             elif node == self.dest_node:
                 color = (255, 0, 0)  # Red color for destination node
                 pygame.draw.circle(
-                    self.screen, color, self.to_screen(pos), self.node_radius + 5, 3
-                )  # Add outline effect
+                    self.screen, color, self.to_screen(pos), self.node_radius + 5, 3)
                 self.draw_text("Destination", screen_pos)
             else:
                 color = self.node_color
@@ -92,7 +113,7 @@ class GraphVisualizer:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
-            self.draw_graph(colors)
+            self.draw_graph(colors, (1, 2))
         pygame.quit()
 
 
