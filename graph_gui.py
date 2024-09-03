@@ -27,9 +27,12 @@ class GraphVisualizer:
         self.node_radius = 10  # Radius of nodes
         self.font = pygame.font.SysFont(None, 24)
 
-        # Load an image to display over an edge
-        self.car_image = pygame.image.load('car.png')  # Update path to your image
+        self.car_image = pygame.image.load('images/car.png')
         self.car_image = pygame.transform.scale(self.car_image, (80, 80))  # Scale the image to fit
+        self.start_point_image = pygame.image.load('images/start_point.jpeg')
+        self.start_point_image = pygame.transform.scale(self.start_point_image, (34, 34))  # Scale the image to fit
+        self.end_point_image = pygame.image.load('images/end_point.jpeg')
+        self.end_point_image = pygame.transform.scale(self.end_point_image, (34, 34))
 
     def draw_car_on_edge(self, edge):
         start_pos = self.positions[edge[0]]
@@ -42,10 +45,10 @@ class GraphVisualizer:
                     (start_screen_pos[1] + end_screen_pos[1]) // 2)
 
         # Calculate the angle of the edge in degrees
-        angle = math.degrees(math.atan2(end_screen_pos[0] - start_screen_pos[0],
-                             end_screen_pos[1] - start_screen_pos[1]))
+        angle = math.degrees(math.atan2(- end_screen_pos[0] + start_screen_pos[0],
+                             - end_screen_pos[1] + start_screen_pos[1]))
 
-        # Rotate the car image based on the calculated angle
+        # Rotate the car image based on the     §\]calculated angle
         rotated_car = pygame.transform.rotate(self.car_image,
                                               angle)  # Negative angle to adjust for Pygame's rotation direction
 
@@ -72,20 +75,16 @@ class GraphVisualizer:
 
             # Highlight src_node and dest_node with different colors or effects
             if node == self.src_node:
-                color = (0, 255, 0)  # Green color for source node
-                pygame.draw.circle(
-                    self.screen, color, self.to_screen(pos), self.node_radius + 5, 3)
-                self.draw_text("Starting Point", screen_pos)
+                pygame.draw.circle(self.screen, self.node_color, screen_pos, self.node_radius + 16, 3)
+                self.draw_text("Starting Point", screen_pos, self.node_color)
+                self.screen.blit(self.start_point_image, (screen_pos[0] - 17, screen_pos[1] - 17))
 
             elif node == self.dest_node:
-                color = (255, 0, 0)  # Red color for destination node
-                pygame.draw.circle(
-                    self.screen, color, self.to_screen(pos), self.node_radius + 5, 3)
-                self.draw_text("Destination", screen_pos)
+                pygame.draw.circle(self.screen, self.node_color, screen_pos, self.node_radius + 16, 3)
+                self.draw_text("Destination", screen_pos, self.node_color)
+                self.screen.blit(self.end_point_image, (screen_pos[0] - 17, screen_pos[1] - 17))
             else:
-                color = self.node_color
-
-                pygame.draw.circle(self.screen, color, self.to_screen(pos), self.node_radius)
+                pygame.draw.circle(self.screen, self.node_color, screen_pos, self.node_radius)
 
         # Update the display
         pygame.display.flip()
@@ -96,10 +95,10 @@ class GraphVisualizer:
         y = int((pos[1] + 1) * (self.height - 200) / 2 + 100)
         return x, y
 
-    def draw_text(self, text, position):
+    def draw_text(self, text, position, color):
         """Draw text labels near the nodes."""
-        text_surface = self.font.render(text, True, (0, 0, 0))  # Render text in black color
-        text_rect = text_surface.get_rect(center=(position[0], position[1] - 30))  # Position text above the node
+        text_surface = self.font.render(text, True, color)  # Render text in black color
+        text_rect = text_surface.get_rect(center=(position[0], position[1] - 40))  # Position text above the node
         self.screen.blit(text_surface, text_rect)  # Draw text on the screen
 
     def run(self):
