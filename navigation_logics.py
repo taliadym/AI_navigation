@@ -1,5 +1,6 @@
 import numpy as np
 from a_star import a_star
+from bfs import bfs
 
 speed_limits = [20, 40, 80, 90, 120]
 
@@ -56,7 +57,8 @@ class NavigationLogics:
 
         # find the current_d_path: self.current_node->self.dest_node, using agent
         time_cost = {edge: self.road_length[edge]/((1 - self.traffic_index[edge]) * self.speed_limit[edge]) for edge in self.edges}
-        self.current_d_path = a_star(self.current_node, self.dest_node, self.edges, time_cost)
+        # self.current_d_path = a_star(self.current_node, self.dest_node, self.edges, time_cost)
+        self.current_d_path = bfs(self.current_node, self.dest_node, self.edges, time_cost)
 
         print(self.current_node)
         print(self.current_d_path)
