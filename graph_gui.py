@@ -2,6 +2,7 @@ import pygame
 import networkx as nx
 import math
 
+
 # Define the GraphVisualizer class
 class GraphVisualizer:
     def __init__(self, nodes, edges, src_node, dest_node):
