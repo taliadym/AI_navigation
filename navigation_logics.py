@@ -1,6 +1,7 @@
 import numpy as np
 from agents.AStarAgent import AStarAgent
 from agents.BFSAgent import BFSAgent
+from agents.QLearningAgent import QLearningAgent
 import csv
 from agents.agent import ASTAR__ZERO_H, ASTAR__ARIAL_DIST_H, ASTAR__DIJKSTRA_H, QLEARNING
 
@@ -62,15 +63,15 @@ class NavigationLogics:
         # but only the path according to agent_enum will be shown on gui and forwarded to manager
         self.agents = [
                         # *** agents for changing costs ***
-                        AStarAgent(dest_node, edges, nodes_positions, max_speed_limit, ASTAR__ZERO_H),
-                        AStarAgent(dest_node, edges, nodes_positions, max_speed_limit, ASTAR__ARIAL_DIST_H),
-                        AStarAgent(dest_node, edges, nodes_positions, max_speed_limit, ASTAR__DIJKSTRA_H),
-                        BFSAgent(dest_node, edges, nodes_positions, max_speed_limit),
+                        AStarAgent(dest_node, self.edges, nodes_positions, max_speed_limit, ASTAR__ZERO_H),
+                        AStarAgent(dest_node, self.edges, nodes_positions, max_speed_limit, ASTAR__ARIAL_DIST_H),
+                        AStarAgent(dest_node, self.edges, nodes_positions, max_speed_limit, ASTAR__DIJKSTRA_H),
+                        QLearningAgent(dest_node, self.edges, nodes_positions, max_speed_limit),
                         # *** agents for mean costs ***
-                        AStarAgent(dest_node, edges, nodes_positions, max_speed_limit, ASTAR__ZERO_H),
-                        AStarAgent(dest_node, edges, nodes_positions, max_speed_limit, ASTAR__ARIAL_DIST_H),
-                        AStarAgent(dest_node, edges, nodes_positions, max_speed_limit, ASTAR__DIJKSTRA_H),
-                        BFSAgent(dest_node, edges, nodes_positions, max_speed_limit)]
+                        AStarAgent(dest_node, self.edges, nodes_positions, max_speed_limit, ASTAR__ZERO_H),
+                        AStarAgent(dest_node, self.edges, nodes_positions, max_speed_limit, ASTAR__ARIAL_DIST_H),
+                        AStarAgent(dest_node, self.edges, nodes_positions, max_speed_limit, ASTAR__DIJKSTRA_H),
+                        QLearningAgent(dest_node, self.edges, nodes_positions, max_speed_limit)]
 
         self.agent_enum = agent_enum
         self.agent_current_d_paths = [None for _ in self.agents]

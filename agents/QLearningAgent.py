@@ -1,86 +1,133 @@
-import numpy as np
 import random
+from collections import defaultdict
+from agents.agent import Agent
 
 
-# Define the environment
-class GridWorld:
-    def __init__(self, size, start, goal, obstacles):
-        self.size = size
-        self.start = start
-        self.goal = goal
-        self.obstacles = obstacles
-        self.state = start
+class QLearningAgent(Agent):
+    def __init__(self, goal_node, edges, nodes_positions, max_speed_limit, learning_rate=0.1, discount_factor=0.9,
+                 exploration_rate=0.2):
+        """
+        Initialize the Q-learning agent with parameters for learning.
 
-    def reset(self):
-        self.state = self.start
-        return self.state
+        :param goal_node: The goal node the agent aims to reach.
+        :param edges: List of edges represented as tuples (start_node, end_node).
+        :param nodes_positions: Dictionary of node positions {node: (x, y)}.
+        :param max_speed_limit: The maximum speed limit for heuristic calculations.
+        :param learning_rate: The learning rate (alpha) for Q-value updates.
+        :param discount_factor: The discount factor (gamma) to weigh future rewards.
+        :param exploration_rate: The initial exploration rate (epsilon) for epsilon-greedy strategy.
+        """
+        super().__init__(goal_node, edges, nodes_positions, max_speed_limit)
 
-    def step(self, action):
-        row, col = self.state
-        if action == 0:  # Up
-            row = max(row - 1, 0)
-        elif action == 1:  # Down
-            row = min(row + 1, self.size - 1)
-        elif action == 2:  # Left
-            col = max(col - 1, 0)
-        elif action == 3:  # Right
-            col = min(col + 1, self.size - 1)
+        # self.q_table is a defaultdict where each key corresponds to a state (a node in our Q-learning context).
+        # The value of each key is another defaultdict, which represents the actions for that state.
+        # This inner dictionary holds the Q-values associated with each possible action from the given state.
+        self.q_table = defaultdict(lambda: defaultdict(float))
 
-        next_state = (row, col)
-        reward = -1  # Default reward
-        if next_state == self.goal:
-            reward = 10
-        elif next_state in self.obstacles:
-            reward = -10
-            next_state = self.state  # Reset to current state if obstacle
+        self.learning_rate = learning_rate
+        self.discount_factor = discount_factor
+        self.exploration_rate = exploration_rate
 
-        self.state = next_state
-        return next_state, reward, (next_state == self.goal)  # State, Reward, Done (goal reached or not)
+    def get_possible_actions(self, current_node):
+        """
+        Get all possible actions (edges) from the current node.
 
+        :param current_node: The n9ode from which to find possible actions.
+        :return: A list of possible edges (actions).
+        """
+        #print("the edges are: ", self.edges)
+        a = [edge for edge in self.edges if edge[0] == current_node]
+        #print("cur node is: ", current_node, ", and the edges are:", a)
+        return a
 
-# Q-learning parameters
-alpha = 0.1  # Learning rate
-gamma = 0.9  # Discount factor
-epsilon = 0.1  # Exploration rate
-episodes = 1000
-actions = 4  # Up, Down, Left, Right
+    def choose_action(self, current_node):
+        """
+        Choose an action using an epsilon-greedy strategy.
 
-# Define the grid world environment
-grid_size = 5
-start_state = (0, 0)
-goal_state = (4, 4)
-obstacles = [(1, 1), (2, 2), (3, 3)]  # Example obstacles
-env = GridWorld(grid_size, start_state, goal_state, obstacles)
-
-# Initialize Q-table (state-action pairs)
-q_table = np.zeros((grid_size, grid_size, actions))
-
-# Q-learning algorithm
-for episode in range(episodes):
-    state = env.reset()
-    done = False
-
-    while not done:
-        row, col = state
-
-        # Choose action (ε-greedy policy)
-        if random.uniform(0, 1) < epsilon:
-            action = random.randint(0, actions - 1)  # Explore: random action
+        :param current_node: The current node of the agent.
+        :return: The chosen action (edge).
+        """
+        if random.uniform(0, 1) < self.exploration_rate:
+            # Explore: select a random action
+            actions = self.get_possible_actions(current_node)
+            if actions:
+                return random.choice(actions)
+            else:
+                return None
         else:
-            action = np.argmax(q_table[row, col])  # Exploit: best known action
+            # Exploit: select the action with the highest Q-value
+            possible_actions = self.get_possible_actions(current_node)
+            if not possible_actions:
+                return None
+            # Choose the action with the maximum Q-value
+            best_action = max(possible_actions, key=lambda action: self.q_table[current_node][action])
+            return best_action
 
-        # Take action and observe the next state and reward
-        next_state, reward, done = env.step(action)
-        next_row, next_col = next_state
+    def update_q_value(self, current_node, action, reward, next_node):
+        """
+        Update the Q-value for a state-action pair.
 
-        # Update Q-value using the Q-learning update rule
-        q_table[row, col, action] = q_table[row, col, action] + alpha * (
-                reward + gamma * np.max(q_table[next_row, next_col]) - q_table[row, col, action]
-        )
+        :param current_node: The current node of the agent.
+        :param action: The action taken (edge).
+        :param reward: The reward received after taking the action.
+        :param next_node: The resulting node after taking the action.
+        """
+        current_q_value = self.q_table[current_node][action]
+        max_future_q = max(self.q_table[next_node].values(), default=0)
+        new_q_value = current_q_value + self.learning_rate * (reward + self.discount_factor * max_future_q - current_q_value)
+        self.q_table[current_node][action] = new_q_value
 
-        # Move to the next state
-        state = next_state
+    def find_path(self, start_node, edge_costs, episodes=1000):
+        """
+        Find the optimal path using Q-learning by training over multiple episodes.
 
-# Output learned Q-values (for visualizing the agent's learning)
-print("Learned Q-table:")
-print(q_table)
+        :param start_node: The starting node of the agent.
+        :param edge_costs: A dictionary of edges and their associated time costs.
+        :param episodes: The number of episodes for training.
+        :return: The learned optimal path from start to goal node.
+        """
+        for episode in range(episodes):
+            current_node = start_node
+            path = []
+
+            while current_node != self.goal_node:
+                # Choose an action based on the current node
+                action = self.choose_action(current_node)
+                if action is None:
+                    break  # No possible actions; terminate
+
+                next_node = action[1]  # The destination node of the selected edge
+                reward = -edge_costs.get(action, float('inf'))  # Negative reward to minimize cost
+
+                # Update the Q-value for the state-action pair
+                self.update_q_value(current_node, action, reward, next_node)
+
+                # Move to the next node
+                current_node = next_node
+                path.append(action)
+
+            # Decay exploration rate over time to reduce randomness
+            self.exploration_rate *= 0.995
+
+        # After training, determine the best path by exploiting learned Q-values
+        return self._exploit_path(start_node)
+
+    def _exploit_path(self, start_node):
+        """
+        Exploit the learned Q-values to find the best path.
+
+        :param start_node: The starting node of the agent.
+        :return: The optimal path according to the Q-table.
+        """
+        current_node = start_node
+        path = []
+
+        while current_node != self.goal_node:
+            action = self.choose_action(current_node)
+            if action is None:
+                break
+            current_node = action[1]
+            path.append(action)
+
+        self.path = path
+        return path
