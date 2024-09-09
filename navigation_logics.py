@@ -1,6 +1,7 @@
 import numpy as np
 from agents.AStarAgent import AStarAgent
 from agents.BFSAgent import BFSAgent
+from agents.QLearningAgent import QLearningAgent
 
 speed_limits = [20, 40, 80, 90, 120]
 max_speed_limit = max(speed_limits)
@@ -12,8 +13,7 @@ class NavigationLogics:
         self.src_node = src_node
         self.dest_node = dest_node
         self.nodes_positions = nodes_positions
-        self.agent = AStarAgent(dest_node, edges, nodes_positions, max_speed_limit)
-        self.agent = BFSAgent(dest_node, edges, nodes_positions, max_speed_limit)
+
 
         # where the car is currently
         self.current_node = self.src_node
@@ -46,6 +46,10 @@ class NavigationLogics:
             self.speed_limit[opposite_edge] = self.speed_limit[edge]
             self.road_length[opposite_edge] = self.road_length[edge]
             self.traffic_index[opposite_edge] = self.traffic_index[edge]
+
+        self.agent = AStarAgent(dest_node, self.edges, nodes_positions, max_speed_limit)
+        self.agent = BFSAgent(dest_node, self.edges, nodes_positions, max_speed_limit)
+        self.agent = QLearningAgent(dest_node, self.edges, nodes_positions, max_speed_limit)
 
     def get_edge_dist(self, edge):
         n1, n2 = edge
