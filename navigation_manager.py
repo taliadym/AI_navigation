@@ -47,7 +47,7 @@ class NavigationManager:
         self.est_time = None
         self.prev_est_time = None
         self.prev_d_path = None
-        self.logics = NavigationLogics(self.nodes, self.edges, self.src_node, self.dest_node)
+        self.logics = NavigationLogics(self.nodes, self.edges, self.src_node, self.dest_node, self.positions)
 
     def update_timer(self):
         # update timer
