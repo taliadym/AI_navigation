@@ -28,7 +28,7 @@ class NavigationLogics:
         for edge in edges:
             self.edges.append(edge)
             self.edge_traffic_mean[edge] = np.random.uniform(0.001, 0.9)
-            self.edge_traffic_std[edge] = np.random.uniform(0.1, 0.5)
+            self.edge_traffic_std[edge] = np.random.uniform(0.1, 0.9)
             self.speed_limit[edge] = speed_limits[int(np.random.uniform(0, 5))]
             self.road_length[edge] = np.random.uniform(0.1, 100)
 
@@ -43,6 +43,13 @@ class NavigationLogics:
             self.road_length[opposite_edge] = self.road_length[edge]
             self.traffic_index[opposite_edge] = self.traffic_index[edge]
 
+    def get_time_for_crossing_edge(self, edge):
+        if edge is None:
+            return 0
+        v = (1 - self.traffic_index[edge]) * self.speed_limit[edge]
+        x = self.road_length[edge]
+        return x / v
+
     def update(self):
         # called in each iteration by manager::run
 
@@ -56,9 +63,9 @@ class NavigationLogics:
             self.traffic_index[edge] = index
 
         # find the current_d_path: self.current_node->self.dest_node, using agent
-        time_cost = {edge: self.road_length[edge]/((1 - self.traffic_index[edge]) * self.speed_limit[edge]) for edge in self.edges}
-        # self.current_d_path = a_star(self.current_node, self.dest_node, self.edges, time_cost)
-        self.current_d_path = bfs(self.current_node, self.dest_node, self.edges, time_cost)
+        time_cost = {edge: self.get_time_for_crossing_edge(edge) for edge in self.edges}
+        self.current_d_path = a_star(self.current_node, self.dest_node, self.edges, time_cost)
+        # self.current_d_path = bfs(self.current_node, self.dest_node, self.edges, time_cost)
 
         print(self.current_node)
         print(self.current_d_path)
