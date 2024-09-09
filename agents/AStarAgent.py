@@ -1,9 +1,10 @@
 import heapq
 import math
-from agents.agent import Agent
+from agents.agent import Agent, ASTAR__ZERO_H, ASTAR__ARIAL_DIST_H, ASTAR__DIJKSTRA_H, QLEARNING
+
 
 class AStarAgent(Agent):
-    def __init__(self, goal_node, edges, nodes_positions, max_speed_limit):
+    def __init__(self, goal_node, edges, nodes_positions, max_speed_limit, heuristic):
         """
         Initialize the A* agent with additional parameters needed for pathfinding.
 
@@ -15,19 +16,11 @@ class AStarAgent(Agent):
         :param max_speed_limit: The maximum speed limit for heuristic calculations.
         """
         super().__init__(goal_node, edges, nodes_positions, max_speed_limit)
-
-    def heuristic(self, node, goal):
-        """
-        Heuristic function calculating the estimated time to reach the goal.
-
-        :param node: The current node.
-        :param goal: The goal node.
-        :return: The estimated time based on the Euclidean distance divided by the maximum speed limit.
-        """
-        node_pos = self.nodes_positions[node]
-        goal_pos = self.nodes_positions[goal]
-        distance = math.sqrt((node_pos[0] - goal_pos[0]) ** 2 + (node_pos[1] - goal_pos[1]) ** 2)
-        return distance / self.max_speed_limit
+        self.heuristic = ZeroHeuristic()
+        if heuristic == ASTAR__ARIAL_DIST_H:
+            self.heuristic = ArialDistHeuristic(nodes_positions, max_speed_limit)
+        elif heuristic == ASTAR__DIJKSTRA_H:
+            self.heuristic = DijkstraHeuristic()
 
     def find_path(self, start_node, edge_costs):
         """Find the shortest path from the start node to the goal node using A* algorithm."""
@@ -38,7 +31,7 @@ class AStarAgent(Agent):
         for edge in self.edges:
             if edge[0] == start_node:
                 initial_cost = edge_costs.get(edge, float('inf'))
-                f_cost = initial_cost + self.heuristic(edge[1], self.goal_node)
+                f_cost = initial_cost + self.heuristic.heuristic(edge[1], self.goal_node)
                 heapq.heappush(open_set, (f_cost, edge, initial_cost, [edge]))
 
         # Track visited nodes to avoid revisiting
@@ -69,9 +62,39 @@ class AStarAgent(Agent):
                 new_g_cost = current_g_cost + edge_costs.get(next_edge, float('inf'))
 
                 # Calculate f_cost using heuristic
-                new_f_cost = new_g_cost + self.heuristic(next_edge[1], self.goal_node)
+                new_f_cost = new_g_cost + self.heuristic.heuristic(next_edge[1], self.goal_node)
 
                 # Add the new path to the priority queue
                 heapq.heappush(open_set, (new_f_cost, next_edge, new_g_cost, path + [next_edge]))
 
         return None  # No path found
+
+class Heuristic():
+    def heuristic(self, start_node, goal):
+        pass
+
+class ZeroHeuristic(Heuristic):
+    def heuristic(self, start_node, goal):
+        return 0
+
+class ArialDistHeuristic(Heuristic):
+    def __init__(self, nodes_positions, max_speed_limit):
+        self.nodes_positions = nodes_positions
+        self.max_speed_limit = max_speed_limit
+    def heuristic(self, start_node, goal):
+        """
+        the heuristic calculates the time it takes to get from node to goal under two relaxations:
+        1. there exists a direct path from node to goal with length which is exactly their arial distance
+        2. the speed limit in that path is the maximal, and there is no traffic
+        """
+        node_pos = self.nodes_positions[start_node]
+        goal_pos = self.nodes_positions[goal]
+        distance = math.sqrt((node_pos[0] - goal_pos[0]) ** 2 + (node_pos[1] - goal_pos[1]) ** 2)
+        return distance / self.max_speed_limit
+
+class DijkstraHeuristic(Heuristic):
+    def heuristic(self, start_node, goal):
+        #todo
+        return 0
+
+

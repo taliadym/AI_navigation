@@ -1,6 +1,7 @@
 from collections import deque
 from agents.agent import Agent
 
+#todo: remove
 
 class BFSAgent(Agent):
     def __init__(self, goal_node, edges, nodes_positions, max_speed_limit):
