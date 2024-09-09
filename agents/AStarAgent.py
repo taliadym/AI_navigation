@@ -14,10 +14,7 @@ class AStarAgent(Agent):
         :param nodes_positions: Dictionary of node positions {node: (x, y)}.
         :param max_speed_limit: The maximum speed limit for heuristic calculations.
         """
-        super().__init__(goal_node)
-        self.edges = edges
-        self.nodes_positions = nodes_positions
-        self.max_speed_limit = max_speed_limit
+        super().__init__(goal_node, edges, nodes_positions, max_speed_limit)
 
     def heuristic(self, node, goal):
         """

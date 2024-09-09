@@ -1,12 +1,14 @@
 
 class Agent:
-    def __init__(self, goal_node):
+    def __init__(self, goal_node, edges, nodes_positions, max_speed_limit):
         """
-        Initialize the agent with a goal node.
-        :param goal_node: The goal node the agent aims to reach.
+        Initialize the agent.
         """
         self.goal_node = goal_node
         self.path = []
+        self.edges = edges
+        self.nodes_positions = nodes_positions
+        self.max_speed_limit = max_speed_limit
 
 
     def find_path(self, start_node, edge_costs):
