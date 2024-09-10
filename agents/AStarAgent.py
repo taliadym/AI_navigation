@@ -1,10 +1,11 @@
 import heapq
 import math
-from agents.agent import Agent, ASTAR__ZERO_H, ASTAR__ARIAL_DIST_H, ASTAR__DIJKSTRA_H, QLEARNING
+from collections import defaultdict
+from agents.agent import Agent, ASTAR__ZERO_H, ASTAR__ARIAL_DIST_H, ASTAR__DIJKSTRA_H
 
 
 class AStarAgent(Agent):
-    def __init__(self, goal_node, edges, nodes_positions, max_speed_limit, heuristic):
+    def __init__(self, goal_node, edges, nodes_positions, max_speed_limit, roads_length, heuristic):
         """
         Initialize the A* agent with additional parameters needed for pathfinding.
 
@@ -20,7 +21,7 @@ class AStarAgent(Agent):
         if heuristic == ASTAR__ARIAL_DIST_H:
             self.heuristic = ArialDistHeuristic(nodes_positions, max_speed_limit)
         elif heuristic == ASTAR__DIJKSTRA_H:
-            self.heuristic = DijkstraHeuristic()
+            self.heuristic = DijkstraHeuristic(goal_node, edges, roads_length)
 
     def find_path(self, start_node, edge_costs):
         """Find the shortest path from the start node to the goal node using A* algorithm."""
@@ -38,6 +39,8 @@ class AStarAgent(Agent):
         visited = set()
 
         while open_set:
+            # TODO:delete
+            print("Entered - A*")
             # Pop the edge with the lowest f_cost from the priority queue
             current_f_cost, current_edge, current_g_cost, path = heapq.heappop(open_set)
 
@@ -69,18 +72,22 @@ class AStarAgent(Agent):
 
         return None  # No path found
 
+
 class Heuristic():
     def heuristic(self, start_node, goal):
         pass
+
 
 class ZeroHeuristic(Heuristic):
     def heuristic(self, start_node, goal):
         return 0
 
+
 class ArialDistHeuristic(Heuristic):
     def __init__(self, nodes_positions, max_speed_limit):
         self.nodes_positions = nodes_positions
         self.max_speed_limit = max_speed_limit
+
     def heuristic(self, start_node, goal):
         """
         the heuristic calculates the time it takes to get from node to goal under two relaxations:
@@ -92,9 +99,52 @@ class ArialDistHeuristic(Heuristic):
         distance = math.sqrt((node_pos[0] - goal_pos[0]) ** 2 + (node_pos[1] - goal_pos[1]) ** 2)
         return distance / self.max_speed_limit
 
+
 class DijkstraHeuristic(Heuristic):
+    def __init__(self, goal_node, edges, roads_length):
+        """
+        Initialize the DijkstraHeuristic with precomputed shortest path costs from all nodes to the goal node.
+        """
+        self.goal_node = goal_node
+        self.edges = edges
+        self.edge_costs = roads_length
+        self.dijkstra_costs = self.compute_dijkstra_costs()
+
+    def compute_dijkstra_costs(self):
+        """
+        Compute shortest path costs from all nodes to the goal node using Dijkstra's algorithm.
+        Returns a dictionary with nodes as keys and their cost to the goal node as values.
+        """
+        costs = defaultdict(lambda: float('inf'))
+        costs[self.goal_node] = 0
+        priority_queue = [(0, self.goal_node)]  # (cost, node)
+
+        # Reverse the edges to work from goal node backwards
+        reverse_edges = defaultdict(list)
+        for start, end in self.edges:
+            reverse_edges[end].append((start, self.edge_costs.get((start, end), float('inf'))))
+
+        visited = set()
+
+        while priority_queue:
+            current_cost, current_node = heapq.heappop(priority_queue)
+
+            if current_node in visited:
+                continue
+            visited.add(current_node)
+
+            for neighbor, edge_cost in reverse_edges[current_node]:
+                new_cost = current_cost + edge_cost
+                if new_cost < costs[neighbor]:
+                    costs[neighbor] = new_cost
+                    heapq.heappush(priority_queue, (new_cost, neighbor))
+
+        return costs
+
     def heuristic(self, start_node, goal):
-        #todo
-        return 0
+        """
+        Return the precomputed Dijkstra cost from the start node to the goal node.
+        """
+        return self.dijkstra_costs.get(start_node, float('inf'))
 
 

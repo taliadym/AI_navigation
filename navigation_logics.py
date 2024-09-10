@@ -1,6 +1,5 @@
 import numpy as np
 from agents.AStarAgent import AStarAgent
-from agents.BFSAgent import BFSAgent
 from agents.QLearningAgent import QLearningAgent
 import csv
 from agents.agent import ASTAR__ZERO_H, ASTAR__ARIAL_DIST_H, ASTAR__DIJKSTRA_H, QLEARNING
@@ -62,16 +61,16 @@ class NavigationLogics:
         # all agents will be recorded,
         # but only the path according to agent_enum will be shown on gui and forwarded to manager
         self.agents = [
-                        # *** agents for changing costs ***
-                        AStarAgent(dest_node, self.edges, nodes_positions, max_speed_limit, ASTAR__ZERO_H),
-                        AStarAgent(dest_node, self.edges, nodes_positions, max_speed_limit, ASTAR__ARIAL_DIST_H),
-                        AStarAgent(dest_node, self.edges, nodes_positions, max_speed_limit, ASTAR__DIJKSTRA_H),
-                        QLearningAgent(dest_node, self.edges, nodes_positions, max_speed_limit),
-                        # *** agents for mean costs ***
-                        AStarAgent(dest_node, self.edges, nodes_positions, max_speed_limit, ASTAR__ZERO_H),
-                        AStarAgent(dest_node, self.edges, nodes_positions, max_speed_limit, ASTAR__ARIAL_DIST_H),
-                        AStarAgent(dest_node, self.edges, nodes_positions, max_speed_limit, ASTAR__DIJKSTRA_H),
-                        QLearningAgent(dest_node, self.edges, nodes_positions, max_speed_limit)]
+            # *** agents for changing costs ***
+            AStarAgent(dest_node, self.edges, nodes_positions, max_speed_limit, self.road_length, ASTAR__ZERO_H),
+            AStarAgent(dest_node, self.edges, nodes_positions, max_speed_limit, self.road_length, ASTAR__ARIAL_DIST_H),
+            AStarAgent(dest_node, self.edges, nodes_positions, max_speed_limit, self.road_length, ASTAR__DIJKSTRA_H),
+            QLearningAgent(dest_node, self.edges, nodes_positions, max_speed_limit),
+            # *** agents for mean costs ***
+            AStarAgent(dest_node, self.edges, nodes_positions, max_speed_limit, self.road_length, ASTAR__ZERO_H),
+            AStarAgent(dest_node, self.edges, nodes_positions, max_speed_limit, self.road_length, ASTAR__ARIAL_DIST_H),
+            AStarAgent(dest_node, self.edges, nodes_positions, max_speed_limit, self.road_length, ASTAR__DIJKSTRA_H),
+            QLearningAgent(dest_node, self.edges, nodes_positions, max_speed_limit)]
 
         self.agent_enum = agent_enum
         self.agent_current_d_paths = [None for _ in self.agents]
@@ -123,11 +122,12 @@ class NavigationLogics:
 
             # *** changing costs ***
             # update path
-            self.agent_current_d_paths[i] =\
+            self.agent_current_d_paths[i] = \
                 self.agents[i].find_path(self.agent_current_node[i], changing_time_cost)
 
             # update cost
-            self.agent_total_path_cost[i] += self.get_time_for_crossing_edge(self.get_first_edge(self.agent_current_d_paths[i]))
+            self.agent_total_path_cost[i] += self.get_time_for_crossing_edge(
+                self.get_first_edge(self.agent_current_d_paths[i]))
 
             # update current node
             if self.agent_current_d_paths[i]:
@@ -137,10 +137,12 @@ class NavigationLogics:
             if self.calculate_paths_only_once:
                 # update path
                 self.agent_current_d_paths[i + self.num_of_different_agents] = \
-                    self.agents[i + self.num_of_different_agents].find_path(self.agent_current_node[i + self.num_of_different_agents], mean_time_cost)
+                    self.agents[i + self.num_of_different_agents].find_path(
+                        self.agent_current_node[i + self.num_of_different_agents], mean_time_cost)
 
                 # update cost
-                self.agent_total_path_cost[i + self.num_of_different_agents] += self.get_time_for_crossing_edge(self.get_first_edge(self.agent_current_d_paths[i + self.num_of_different_agents]))
+                self.agent_total_path_cost[i + self.num_of_different_agents] += self.get_time_for_crossing_edge(
+                    self.get_first_edge(self.agent_current_d_paths[i + self.num_of_different_agents]))
         self.calculate_paths_only_once = False
 
     def update(self):
@@ -166,11 +168,10 @@ class NavigationLogics:
         self.current_d_path = self.agent_current_d_paths[self.agent_enum]
         self.current_node = self.agent_current_node[self.agent_enum]
 
+        # TODO: delete
+        print(self.current_node)
+        print(self.current_d_path)
+
         if self.current_node == self.dest_node:
             # record all agents results into csv file
             self.record_agents_results()
-
-
-
-
-
