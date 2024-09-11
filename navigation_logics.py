@@ -3,11 +3,14 @@ from agents.AStarAgent import AStarAgent
 from agents.QLearningAgent import QLearningAgent
 import csv
 from agents.agent import ASTAR__ZERO_H, ASTAR__ARIAL_DIST_H, ASTAR__DIJKSTRA_H, QLEARNING
+import time
 
 RESULTS_FILE = 'results_recording.csv'
 speed_limits = [20, 40, 80, 90, 120]
 max_speed_limit = max(speed_limits)
 
+MAX_TRAFFIC_INDEX = 0.99999
+MIN_TRAFFIC_INDEX = 0.00001
 
 def add_row_to_csv(row, file_path):
     with open(file_path, mode='a', newline='') as file:
@@ -20,8 +23,9 @@ def add_row_to_csv(row, file_path):
 
 
 class NavigationLogics:
-    def __init__(self, nodes, edges, src_node, dest_node, nodes_positions, results_file=RESULTS_FILE, agent_enum=0):
+    def __init__(self, nodes, edges, src_node, dest_node, nodes_positions, results_file=RESULTS_FILE, agent_enum=0, run_all_algos=True):
         self.nodes = nodes
+        self.undirected_edges = edges
         self.src_node = src_node
         self.dest_node = dest_node
         self.nodes_positions = nodes_positions
@@ -40,7 +44,7 @@ class NavigationLogics:
         self.speed_limit = {}
         self.road_length = {}
 
-        for edge in edges:
+        for edge in self.undirected_edges:
             self.edges.append(edge)
             self.edge_traffic_mean[edge] = np.random.uniform(0.001, 0.9)
             self.edge_traffic_std[edge] = np.random.uniform(0.1, 0.9)
@@ -48,7 +52,7 @@ class NavigationLogics:
             self.road_length[edge] = round(100 * self.get_edge_dist(edge), 4)
 
         # add the opposite direction to all edges
-        for edge in edges:
+        for edge in self.undirected_edges:
             n1, n2 = edge
             opposite_edge = (n2, n1)
             self.edges.append(opposite_edge)
@@ -62,23 +66,54 @@ class NavigationLogics:
         # but only the path according to agent_enum will be shown on gui and forwarded to manager
         self.agents = [
             # *** agents for changing costs ***
-            AStarAgent(dest_node, self.edges, nodes_positions, max_speed_limit, self.road_length, ASTAR__ZERO_H),
-            AStarAgent(dest_node, self.edges, nodes_positions, max_speed_limit, self.road_length, ASTAR__ARIAL_DIST_H),
-            AStarAgent(dest_node, self.edges, nodes_positions, max_speed_limit, self.road_length, ASTAR__DIJKSTRA_H),
+            AStarAgent(dest_node, self.edges, nodes_positions, max_speed_limit, self.road_length, self.speed_limit, ASTAR__ZERO_H),
+            AStarAgent(dest_node, self.edges, nodes_positions, max_speed_limit, self.road_length, self.speed_limit, ASTAR__ARIAL_DIST_H),
+            AStarAgent(dest_node, self.edges, nodes_positions, max_speed_limit, self.road_length, self.speed_limit, ASTAR__DIJKSTRA_H),
             QLearningAgent(dest_node, self.edges, nodes_positions, max_speed_limit),
             # *** agents for mean costs ***
-            AStarAgent(dest_node, self.edges, nodes_positions, max_speed_limit, self.road_length, ASTAR__ZERO_H),
-            AStarAgent(dest_node, self.edges, nodes_positions, max_speed_limit, self.road_length, ASTAR__ARIAL_DIST_H),
-            AStarAgent(dest_node, self.edges, nodes_positions, max_speed_limit, self.road_length, ASTAR__DIJKSTRA_H),
-            QLearningAgent(dest_node, self.edges, nodes_positions, max_speed_limit)]
+            AStarAgent(dest_node, self.edges, nodes_positions, max_speed_limit, self.road_length, self.speed_limit, ASTAR__ZERO_H),
+            AStarAgent(dest_node, self.edges, nodes_positions, max_speed_limit, self.road_length, self.speed_limit, ASTAR__ARIAL_DIST_H),
+            AStarAgent(dest_node, self.edges, nodes_positions, max_speed_limit, self.road_length, self.speed_limit, ASTAR__DIJKSTRA_H),
+            QLearningAgent(dest_node, self.edges, nodes_positions, max_speed_limit),
+            # *** agents for min costs ***
+            AStarAgent(dest_node, self.edges, nodes_positions, max_speed_limit, self.road_length, self.speed_limit, ASTAR__ZERO_H),
+            AStarAgent(dest_node, self.edges, nodes_positions, max_speed_limit, self.road_length, self.speed_limit, ASTAR__ARIAL_DIST_H),
+            AStarAgent(dest_node, self.edges, nodes_positions, max_speed_limit, self.road_length, self.speed_limit, ASTAR__DIJKSTRA_H),
+            QLearningAgent(dest_node, self.edges, nodes_positions, max_speed_limit),
+            # *** agents for max costs ***
+            AStarAgent(dest_node, self.edges, nodes_positions, max_speed_limit, self.road_length, self.speed_limit, ASTAR__ZERO_H),
+            AStarAgent(dest_node, self.edges, nodes_positions, max_speed_limit, self.road_length, self.speed_limit, ASTAR__ARIAL_DIST_H),
+            AStarAgent(dest_node, self.edges, nodes_positions, max_speed_limit, self.road_length, self.speed_limit, ASTAR__DIJKSTRA_H),
+            QLearningAgent(dest_node, self.edges, nodes_positions, max_speed_limit)
+        ]
 
         self.agent_enum = agent_enum
+        self.num_of_different_agents = 4
+
+        if not run_all_algos:
+            # agents is a list of only the single desired agent
+            self.agents = [
+                        # *** agents for changing costs ***
+                        self.agents[self.agent_enum],
+                        # *** agents for mean costs ***
+                        self.agents[self.agent_enum + self.num_of_different_agents],
+                        # *** agents for min costs ***
+                        self.agents[self.agent_enum + self.num_of_different_agents],
+                        # *** agents for max costs ***
+                        self.agents[self.agent_enum + self.num_of_different_agents]
+            ]
+            self.agent_enum = 0
+            self.num_of_different_agents = 1
+
         self.agent_current_d_paths = [None for _ in self.agents]
         self.agent_current_node = [self.src_node for _ in self.agents]
         self.agent_total_path_cost = [0 for _ in self.agents]
+        self.agent_total_running_time = [0 for _ in range(self.num_of_different_agents)]
         self.results_file = results_file
-        self.num_of_different_agents = 4
         self.calculate_paths_only_once = True
+        self.edge_traffic_min = {edge: max(MIN_TRAFFIC_INDEX, self.edge_traffic_mean[edge] - 2*self.edge_traffic_std[edge]) for edge in self.edges}
+        self.edge_traffic_max = {edge: min(MAX_TRAFFIC_INDEX, self.edge_traffic_mean[edge] + 2*self.edge_traffic_std[edge]) for edge in self.edges}
+
 
     def get_edge_dist(self, edge):
         n1, n2 = edge
@@ -93,10 +128,12 @@ class NavigationLogics:
             return None
         return path[0]
 
-    def get_time_for_crossing_edge(self, edge):
+    def get_time_for_crossing_edge(self, edge, traffic_index=None):
         if edge is None:
             return 0
-        v = (1 - self.traffic_index[edge]) * self.speed_limit[edge]
+        if traffic_index is None:
+            traffic_index = self.traffic_index
+        v = (1 - traffic_index[edge]) * self.speed_limit[edge]
         x = self.road_length[edge]
         return x / v
 
@@ -109,21 +146,26 @@ class NavigationLogics:
 
     def record_agents_results(self):
         row = {}
-
+        n = len(self.agents)
         # fill row with agents results
-        for i in range(len(self.agents)):
+        for i in range(n):
             row[str(i)] = round(60 * self.agent_total_path_cost[i], 2)
+
+        for i in range(self.num_of_different_agents):
+            row[str(i + n)] = self.agent_total_running_time[i]
 
         add_row_to_csv(row, self.results_file)
 
-    def find_path_of_all_agents(self, changing_time_cost, mean_time_cost):
+    def find_path_of_all_agents(self, changing_time_cost, mean_time_cost, min_time_cost, max_time_cost):
 
         for i in range(self.num_of_different_agents):
 
-            # *** changing costs ***
+            # ****** changing costs ******
             # update path
+            start_time = time.time()  # Start time
             self.agent_current_d_paths[i] = \
                 self.agents[i].find_path(self.agent_current_node[i], changing_time_cost)
+            end_time = time.time()
 
             # update cost
             self.agent_total_path_cost[i] += self.get_time_for_crossing_edge(
@@ -133,44 +175,73 @@ class NavigationLogics:
             if self.agent_current_d_paths[i]:
                 self.agent_current_node[i] = self.agent_current_d_paths[i][0][1]
 
-            # *** mean costs ***
+            # update algo running time
+            self.agent_total_running_time[i] += end_time - start_time
+
             if self.calculate_paths_only_once:
+
+                # ****** mean costs ******
+                shift = self.num_of_different_agents
                 # update path
-                self.agent_current_d_paths[i + self.num_of_different_agents] = \
-                    self.agents[i + self.num_of_different_agents].find_path(
-                        self.agent_current_node[i + self.num_of_different_agents], mean_time_cost)
+                self.agent_current_d_paths[i + shift] = \
+                    self.agents[i + shift].find_path(
+                        self.agent_current_node[i + shift], mean_time_cost)
 
                 # update cost
-                self.agent_total_path_cost[i + self.num_of_different_agents] += self.get_time_for_crossing_edge(
-                    self.get_first_edge(self.agent_current_d_paths[i + self.num_of_different_agents]))
+                self.agent_total_path_cost[i + shift] += self.get_time_for_crossing_edge(
+                    self.get_first_edge(self.agent_current_d_paths[i + shift]), self.edge_traffic_mean)
+
+                # ****** min costs ******
+                shift = 2 * self.num_of_different_agents
+                # update path
+                self.agent_current_d_paths[i + shift] = \
+                    self.agents[i + shift].find_path(
+                        self.agent_current_node[i + shift], min_time_cost)
+
+                # update cost
+                self.agent_total_path_cost[i + shift] += self.get_time_for_crossing_edge(
+                    self.get_first_edge(self.agent_current_d_paths[i + shift]), self.edge_traffic_min)
+
+                # ****** max costs ******
+                shift = 3 * self.num_of_different_agents
+                # update path
+                self.agent_current_d_paths[i + shift] = \
+                    self.agents[i + shift].find_path(
+                        self.agent_current_node[i + shift], max_time_cost)
+
+                # update cost
+                self.agent_total_path_cost[i + shift] += self.get_time_for_crossing_edge(
+                    self.get_first_edge(self.agent_current_d_paths[i + shift]), self.edge_traffic_max)
+
         self.calculate_paths_only_once = False
+
 
     def update(self):
         # called in each iteration by manager::run
-
         # update traffic index: draw from normal distribution
-        for edge in self.edges:
+        for edge in self.undirected_edges:
             mean = self.edge_traffic_mean[edge]
             std = self.edge_traffic_std[edge]
             index = np.random.normal(mean, std)
-            index = min(0.99999, index)
-            index = max(0.00001, index)
+            index = min(MAX_TRAFFIC_INDEX, index)
+            index = max(MIN_TRAFFIC_INDEX, index)
             self.traffic_index[edge] = index
+            n1, n2 = edge
+            opposite_edge = (n2, n1)
+            self.traffic_index[opposite_edge] = index
 
         # find the current_d_path: self.current_node->self.dest_node, using agent
         changing_time_cost = {edge: self.get_time_for_crossing_edge(edge) for edge in self.edges}
-        mean_time_cost = {edge: self.get_mean_time_for_crossing_edge(edge) for edge in self.edges}
+        mean_time_cost = {edge: self.get_time_for_crossing_edge(edge, self.edge_traffic_mean) for edge in self.edges}
+        min_time_cost = {edge: self.get_time_for_crossing_edge(edge, self.edge_traffic_min) for edge in self.edges}
+        max_time_cost = {edge: self.get_time_for_crossing_edge(edge, self.edge_traffic_max) for edge in self.edges}
 
         # calculate paths by each one of the agents
-        self.find_path_of_all_agents(changing_time_cost, mean_time_cost)
+        self.find_path_of_all_agents(changing_time_cost, mean_time_cost, min_time_cost, max_time_cost)
 
         # save path and current node according to the requested agent (this will be forwarded to manager - shown on gui)
         self.current_d_path = self.agent_current_d_paths[self.agent_enum]
         self.current_node = self.agent_current_node[self.agent_enum]
-
-        # TODO: delete
-        print(self.current_node)
-        print(self.current_d_path)
 
         if self.current_node == self.dest_node:
             # record all agents results into csv file

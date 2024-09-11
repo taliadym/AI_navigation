@@ -7,7 +7,6 @@ import sys
 import time
 
 class NavigationManager:
-
     def __init__(self, nodes, edges, src_node, dest_node):
         self.nodes = nodes
         self.edges = edges
@@ -18,7 +17,7 @@ class NavigationManager:
         pygame.init()
         self.width, self.height = 800, 600
         self.screen = pygame.display.set_mode((self.width, self.height))
-        pygame.display.set_caption('Graph Visualizer')
+        pygame.display.set_caption('AI Navigation Project')
 
         # Set up the graph using networkx
         self.graph = nx.Graph()
@@ -35,8 +34,15 @@ class NavigationManager:
         self.start_point_image = pygame.transform.scale(self.start_point_image, (34, 34))  # Scale the image to fit
         self.end_point_image = pygame.image.load('images/end_point.jpeg')
         self.end_point_image = pygame.transform.scale(self.end_point_image, (34, 34))
+        self.info_image = pygame.image.load('images/info.png')
+        self.info_image = pygame.transform.scale(self.info_image, (34, 34))
 
         self.restart_game_logics()
+
+        self.next_button = pygame.Rect(10, 10, 80, 50)  # (x, y, width, height)
+        self.show_prev_path_button = pygame.Rect(100, 10, 300, 50)
+        self.restart_button = pygame.Rect(410, 10, 100, 50)
+        self.quit_button = pygame.Rect(520, 10, 80, 50)
 
     def restart_game_logics(self):
         self.visited_edges = set()
@@ -48,7 +54,16 @@ class NavigationManager:
         self.prev_est_time = None
         self.prev_d_path = None
         self.logics = NavigationLogics(self.nodes, self.edges, self.src_node, self.dest_node, self.positions)
+        self.popup_edge = None
+        self.speed_limit = self.logics.speed_limit
+        self.edge_info = {edge: "" for edge in self.edges}
 
+    def update_edge_info(self):
+        for edge in self.edges:
+            speed = self.speed_limit[edge]
+            practical_speed = (1 - self.logics.traffic_index[edge]) * speed
+            time = self.logics.get_time_for_crossing_edge(edge)
+            self.edge_info[edge] = f"Speed Limit: {speed}km/h, Practical speed: {round(practical_speed, 2)}km/h, Time to cross: {round(time * 60, 2)} min"
     def update_timer(self):
         # update timer
         if self.current_d_edge is not None:
@@ -98,7 +113,7 @@ class NavigationManager:
         angle = math.degrees(math.atan2(- end_screen_pos[0] + start_screen_pos[0],
                              - end_screen_pos[1] + start_screen_pos[1]))
 
-        # Rotate the car image based on the     §\]calculated angle
+        # Rotate the car image based on the calculated angle
         rotated_car = pygame.transform.rotate(self.car_image,
                                               angle)  # Negative angle to adjust for Pygame's rotation direction
 
@@ -130,15 +145,26 @@ class NavigationManager:
         # Draw the arrowhead using a polygon
         pygame.draw.polygon(self.screen, color, [end_pos, arrow_point1, arrow_point2])
 
-    def draw_graph(self, colors, current_d_path, current_d_edge):
-        # Clear the screen with a white background
-        self.screen.fill((255, 255, 255))
-        self.draw_buttons()
-        self.draw_timers()
+    def point_near_line(point, start, end, tolerance=5):
+        """Check if a point is near a line segment with a given tolerance."""
+        line_rect = pygame.Rect(min(start[0], end[0]), min(start[1], end[1]),
+                                abs(start[0] - end[0]), abs(start[1] - end[1]))
+        if line_rect.collidepoint(point):
+            # Calculate distance from the point to the line segment
+            line_vec = pygame.Vector2(end) - pygame.Vector2(start)
+            point_vec = pygame.Vector2(point) - pygame.Vector2(start)
+            line_len = line_vec.length()
+            if line_len == 0:
+                return False
+            proj_length = line_vec.dot(point_vec) / line_len
+            if 0 <= proj_length <= line_len:
+                closest_point = start + line_vec * (proj_length / line_len)
+                distance = pygame.Vector2(point).distance_to(closest_point)
+                return distance <= tolerance
+        return False
 
-        # Draw edges: color by traffic & mark current path
+    def draw_edges(self, colors, current_d_path):
         for edge in self.edges:
-
             start_pos = self.to_screen(self.positions[edge[0]])
             end_pos = self.to_screen(self.positions[edge[1]])
             color = colors[edge]
@@ -155,14 +181,13 @@ class NavigationManager:
                 color = colors[edge]
                 self.draw_d_arrow(d_edge, color)
 
-            pygame.draw.line(self.screen, color,
-                             start_pos, end_pos, line_width)
+            pygame.draw.line(self.screen, color, start_pos, end_pos, line_width)
 
-        # draw car on the current edge
-        self.draw_car_on_edge(current_d_edge)
-        self.visited_edges.add(current_d_edge)
+            # Check if popup should be shown on this edge
+            if self.popup_edge == edge:
+                self.draw_popup(edge)
 
-        # Draw nodes: mark src & dist
+    def draw_nodes(self):
         node_color = (50, 100, 200)  # Node color
         node_radius = 10  # Radius of nodes
         for node in self.graph.nodes():
@@ -181,6 +206,22 @@ class NavigationManager:
                 self.screen.blit(self.end_point_image, (screen_pos[0] - 17, screen_pos[1] - 17))
             else:
                 pygame.draw.circle(self.screen, node_color, screen_pos, node_radius)
+
+    def draw_graph(self, colors, current_d_path, current_d_edge):
+        # Clear the screen with a white background
+        self.screen.fill((255, 255, 255))
+        self.draw_buttons()
+        self.draw_bottom_text()
+
+        # draw edges: color by traffic & mark current path
+        self.draw_edges(colors, current_d_path)
+
+        # draw car on the current edge
+        self.draw_car_on_edge(current_d_edge)
+        self.visited_edges.add(current_d_edge)
+
+        # Draw nodes: mark src & dist
+        self.draw_nodes()
 
         # Update the display
         pygame.display.flip()
@@ -211,11 +252,6 @@ class NavigationManager:
         text_color = (255, 255, 255)  # White color
         font = pygame.font.SysFont(None, 36)
 
-        self.next_button = pygame.Rect(10, 10, 80, 50)  # (x, y, width, height)
-        self.show_prev_path_button = pygame.Rect(100, 10, 300, 50)
-        self.restart_button = pygame.Rect(410, 10, 100, 50)
-        self.quit_button = pygame.Rect(520, 10, 80, 50)
-
         # Check if the mouse is over the button
         mouse_pos = pygame.mouse.get_pos()
         if self.next_button.collidepoint(mouse_pos):
@@ -245,14 +281,16 @@ class NavigationManager:
         text = font.render("Quit", True, text_color)
         self.screen.blit(text, (self.quit_button.x + 10, self.quit_button.y + 10))
 
-    def draw_timers(self):
+    def draw_bottom_text(self):
+
         font = pygame.font.SysFont(None, 24)
         color = (0, 0, 0)
 
+        # --- timers text ---
         # Render the current time text
         timer_text = f"Time: {round(self.timer * 60, 2)} minutes"
         timer_surface = font.render(timer_text, True, color)
-        timer_rect = timer_surface.get_rect(topleft=(10, 550))  # Set 'topleft' to align left side
+        timer_rect = timer_surface.get_rect(topleft=(10, 520))  # Set 'topleft' to align left side
         self.screen.blit(timer_surface, timer_rect)
 
         # Render the estimated arrival time text
@@ -262,17 +300,52 @@ class NavigationManager:
                 est_timer_text += f", instead of {round(self.prev_est_time * 60, 2)} minutes on the previous path"
                 color = (255, 0, 0)
             est_timer_surface = font.render(est_timer_text, True, color)
-            est_timer_rect = est_timer_surface.get_rect(topleft=(10, 580))  # Aligns with the same left position
+            est_timer_rect = est_timer_surface.get_rect(topleft=(10, 550))  # Aligns with the same left position
             self.screen.blit(est_timer_surface, est_timer_rect)
 
+        # --- edge info text ---
+        color = (0, 0, 0)
+        edge_info_text = f"Edge Info: "
+        if self.popup_edge is not None:
+            edge_info_text += self.edge_info[self.popup_edge]
+        else:
+            edge_info_text += "Press edge for info"
+        edge_info_surface = font.render(edge_info_text, True, color)
+        edge_info_rect = timer_surface.get_rect(topleft=(10, 580))
+        self.screen.blit(edge_info_surface, edge_info_rect)
+
+    def is_mouse_near_edge(self, mouse_pos, edge):
+        n1, n2 = edge
+        x1, y1 = self.to_screen(self.positions[n1])
+        x2, y2 = self.to_screen(self.positions[n2])
+
+        # calculate the distance between the mouse position and the middle of ths edge
+        middle_edge_x, middle_edge_y = abs((x1 + x2)/2), abs((y1 + y2)/2)
+        distance = math.sqrt((middle_edge_x - mouse_pos[0])**2 + (middle_edge_y - mouse_pos[1])**2)
+        return distance < 5
+
+    def draw_popup(self, edge):
+        # Get the midpoint of the edge
+        start_pos = self.to_screen(self.positions[edge[0]])
+        end_pos = self.to_screen(self.positions[edge[1]])
+        midpoint = ((start_pos[0] + end_pos[0]) // 2, (start_pos[1] + end_pos[1]) // 2)
+
+        # Draw a gray square on the selected edge
+        # popup_rect = pygame.Rect(midpoint[0] - 20, midpoint[1] - 20, 40, 40)
+        # pygame.draw.rect(self.screen, (192, 192, 192), popup_rect)
+        # font = pygame.font.SysFont(None, 24)
+        # text_surface = font.render("!", True, (0, 0, 0))
+        # text_rect = text_surface.get_rect(center=popup_rect.center)
+        # self.screen.blit(text_surface, text_rect)
+        self.screen.blit(self.info_image, (midpoint[0] - 20, midpoint[1] - 20))
+
+
     def run(self):
-        # buttons
         next_pressed = False
         quit_pressed = False
-
         got_to_dest = False
-        while not quit_pressed:
 
+        while not quit_pressed:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     quit_pressed = True
@@ -289,6 +362,15 @@ class NavigationManager:
                         self.restart_game_logics()
                         got_to_dest = False
                         next_pressed = False
+                    else:
+                        # Check if any edge was clicked
+                        for edge in self.edges:
+                            if self.is_mouse_near_edge(event.pos, edge):
+                                self.popup_edge = edge
+                                self.draw_graph(self.colors, self.current_d_path, self.current_d_edge)
+                                time.sleep(2)
+                                self.popup_edge = None
+                                break
 
             if next_pressed and got_to_dest:
                 self.update_timer()
@@ -311,6 +393,9 @@ class NavigationManager:
 
                 # get current directed edge
                 self.current_d_edge = None
+                if self.current_d_path is None:
+                    pygame.quit()
+                    sys.exit()
                 if len(self.current_d_path) > 0:
                     self.current_d_edge = self.current_d_path[0]
                     # check if got to dest
@@ -320,8 +405,10 @@ class NavigationManager:
                 # update timers
                 self.update_estimated_time()
 
-            self.draw_graph(self.colors, self.current_d_path, self.current_d_edge)
+                # text for printing on edge
+                self.update_edge_info()
 
+            self.draw_graph(self.colors, self.current_d_path, self.current_d_edge)
         pygame.quit()
         sys.exit()
 
@@ -331,26 +418,27 @@ nodes = [1, 2, 3, 4, 5, 6, 7, 8]
 edges = []
 for i in range(len(nodes)):
     for j in range(len(nodes)):
-        if i < j:
+        coin = int(np.random.choice([0, 1]))
+        if i < j and coin == 0:
             edges.append((nodes[i], nodes[j]))
 
-# # Example 2 usage
+# Example 2 usage
 # nodes = [1, 2, 3, 4, 5, 6, 7, 8]
 # edges = []
 # pairs = [(1, 2), (1, 3), (1, 4), (4, 5), (4, 6), (4, 7), (4, 8)]
 # for start, end in pairs:
 #     edges.append((start, end))  # Edge from start to end
 #     edges.append((end, start))  # Edge from end to start
-#
-# # Example 3 usage
-# nodes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
-# edges = []
-# for i in range(len(nodes)):
-#     for j in range(len(nodes)):
-#         if i < j:
-#             edges.append((nodes[i], nodes[j]))
-#
-# # Example 4 usage
+
+# Example 3 usage
+nodes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+edges = []
+for i in range(len(nodes)):
+    for j in range(len(nodes)):
+        if i < j:
+            edges.append((nodes[i], nodes[j]))
+
+# Example 4 usage
 # nodes = [1, 2, 3, 4, 5, 6, 7, 8, 9]
 # edges = []
 # pairs = [
@@ -370,5 +458,7 @@ for i in range(len(nodes)):
 # visualizer = NavigationManager(nodes, edges, 1, 8)
 
 # Create a GraphVisualizer object and run it
-visualizer = NavigationManager(nodes, edges, 1, 3)
+# if (1, 8) in edges:
+#     edges.remove((1, 8))
+visualizer = NavigationManager(nodes, edges, 1, 8)
 visualizer.run()

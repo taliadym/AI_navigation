@@ -5,7 +5,7 @@ from agents.agent import Agent, ASTAR__ZERO_H, ASTAR__ARIAL_DIST_H, ASTAR__DIJKS
 
 
 class AStarAgent(Agent):
-    def __init__(self, goal_node, edges, nodes_positions, max_speed_limit, roads_length, heuristic):
+    def __init__(self, goal_node, edges, nodes_positions, max_speed_limit, roads_length, speed_limit, heuristic):
         """
         Initialize the A* agent with additional parameters needed for pathfinding.
 
@@ -21,7 +21,7 @@ class AStarAgent(Agent):
         if heuristic == ASTAR__ARIAL_DIST_H:
             self.heuristic = ArialDistHeuristic(nodes_positions, max_speed_limit)
         elif heuristic == ASTAR__DIJKSTRA_H:
-            self.heuristic = DijkstraHeuristic(goal_node, edges, roads_length)
+            self.heuristic = DijkstraHeuristic(goal_node, edges, roads_length, speed_limit)
 
     def find_path(self, start_node, edge_costs):
         """Find the shortest path from the start node to the goal node using A* algorithm."""
@@ -101,13 +101,13 @@ class ArialDistHeuristic(Heuristic):
 
 
 class DijkstraHeuristic(Heuristic):
-    def __init__(self, goal_node, edges, roads_length):
+    def __init__(self, goal_node, edges, roads_length, speed_limit):
         """
         Initialize the DijkstraHeuristic with precomputed shortest path costs from all nodes to the goal node.
         """
         self.goal_node = goal_node
         self.edges = edges
-        self.edge_costs = roads_length
+        self.edge_costs = {edge: roads_length[edge]/speed_limit[edge] for edge in edges}
         self.dijkstra_costs = self.compute_dijkstra_costs()
 
     def compute_dijkstra_costs(self):
