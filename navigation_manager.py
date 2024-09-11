@@ -334,41 +334,41 @@ for i in range(len(nodes)):
         if i < j:
             edges.append((nodes[i], nodes[j]))
 
-# Example 2 usage
-nodes = [1, 2, 3, 4, 5, 6, 7, 8]
-edges = []
-pairs = [(1, 2), (1, 3), (1, 4), (4, 5), (4, 6), (4, 7), (4, 8)]
-for start, end in pairs:
-    edges.append((start, end))  # Edge from start to end
-    edges.append((end, start))  # Edge from end to start
-
-# Example 3 usage
-nodes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
-edges = []
-for i in range(len(nodes)):
-    for j in range(len(nodes)):
-        if i < j:
-            edges.append((nodes[i], nodes[j]))
-
-# Example 4 usage
-nodes = [1, 2, 3, 4, 5, 6, 7, 8, 9]
-edges = []
-pairs = [
-    # Circle 1
-    (1, 2), (2, 3), (3, 1),  # Nodes 1, 2, 3 form a circle
-    # Circle 2
-    (4, 5), (5, 6), (6, 4),  # Nodes 4, 5, 6 form a circle
-    # Circle 3
-    (7, 8), (8, 9), (9, 7),  # Nodes 7, 8, 9 form a circle
-    # Optional connections between circles
-    (3, 4),  # Connecting Circle 1 to Circle 2
-    (6, 7)   # Connecting Circle 2 to Circle 3
-]
-for start, end in pairs:
-    edges.append((start, end))  # Edge from start to end
-    edges.append((end, start))  # Edge from end to start
-visualizer = NavigationManager(nodes, edges, 1, 8)
+# # Example 2 usage
+# nodes = [1, 2, 3, 4, 5, 6, 7, 8]
+# edges = []
+# pairs = [(1, 2), (1, 3), (1, 4), (4, 5), (4, 6), (4, 7), (4, 8)]
+# for start, end in pairs:
+#     edges.append((start, end))  # Edge from start to end
+#     edges.append((end, start))  # Edge from end to start
+#
+# # Example 3 usage
+# nodes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+# edges = []
+# for i in range(len(nodes)):
+#     for j in range(len(nodes)):
+#         if i < j:
+#             edges.append((nodes[i], nodes[j]))
+#
+# # Example 4 usage
+# nodes = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+# edges = []
+# pairs = [
+#     # Circle 1
+#     (1, 2), (2, 3), (3, 1),  # Nodes 1, 2, 3 form a circle
+#     # Circle 2
+#     (4, 5), (5, 6), (6, 4),  # Nodes 4, 5, 6 form a circle
+#     # Circle 3
+#     (7, 8), (8, 9), (9, 7),  # Nodes 7, 8, 9 form a circle
+#     # Optional connections between circles
+#     (3, 4),  # Connecting Circle 1 to Circle 2
+#     (6, 7)   # Connecting Circle 2 to Circle 3
+# ]
+# for start, end in pairs:
+#     edges.append((start, end))  # Edge from start to end
+#     edges.append((end, start))  # Edge from end to start
+# visualizer = NavigationManager(nodes, edges, 1, 8)
 
 # Create a GraphVisualizer object and run it
-visualizer = NavigationManager(nodes, edges, 1, 8)
+visualizer = NavigationManager(nodes, edges, 1, 3)
 visualizer.run()

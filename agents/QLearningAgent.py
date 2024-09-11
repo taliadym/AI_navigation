@@ -131,6 +131,75 @@ class QLearningAgent(Agent):
 
         print("Completed Q-learning episodes.")
 
+    def find_path1(self, start_node, edge_costs, episodes=1000):
+        visited_states = set()  # Track visited states within each episode
+
+        for episode in range(episodes):
+            current_node = start_node
+            path = []
+            visited_states.clear()  # Reset visited states for each new episode
+
+            while current_node != self.goal_node:
+                # TODO:delete
+                print("Entered Q-learning")
+                action = self.choose_action(current_node)
+                print(action)
+                if action is None:
+                    break
+
+                next_node = action[1]
+                reward = -edge_costs.get(action, float('inf'))
+
+                # Penalize revisiting states within the same episode
+                if next_node in visited_states:
+                    break  # Adjust this penalty value as needed
+
+                visited_states.add(next_node)
+                self.update_q_value(current_node, action, reward, next_node)
+                current_node = next_node
+                path.append(action)
+
+            self.exploration_rate *= 0.995  # Decay exploration rate over time
+
+        return self._exploit_path(start_node)
+
+    def find_path2(self, start_node, edge_costs, episodes=1000):
+        """
+        Find the optimal path using Q-learning by training over multiple episodes.
+
+        :param start_node: The starting node of the agent.
+        :param edge_costs: A dictionary of edges and their associated time costs.
+        :param episodes: The number of episodes for training.
+        :return: The learned optimal path from start to goal node.
+        """
+        for episode in range(episodes):
+            current_node = start_node
+            path = []
+
+            while current_node != self.goal_node:
+                # TODO:delete
+                print("Entered Q-learning")
+                # Choose an action based on the current node
+                action = self.choose_action(current_node)
+                if action is None:
+                    break  # No possible actions; terminate
+
+                next_node = action[1]  # The destination node of the selected edge
+                reward = -edge_costs.get(action, float('inf'))  # Negative reward to minimize cost
+
+                # Update the Q-value for the state-action pair
+                self.update_q_value(current_node, action, reward, next_node)
+
+                # Move to the next node
+                current_node = next_node
+                path.append(action)
+
+            # Decay exploration rate over time to reduce randomness
+            self.exploration_rate *= 0.995
+
+        # After training, determine the best path by exploiting learned Q-values
+        return self._exploit_path(start_node)
+
     def _exploit_path(self, start_node):
         """
         Exploit the learned Q-values to find the best path.
