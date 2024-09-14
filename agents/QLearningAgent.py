@@ -35,9 +35,9 @@ class QLearningAgent(Agent):
         :param current_node: The n9ode from which to find possible actions.
         :return: A list of possible edges (actions).
         """
-        #print("the edges are: ", self.edges)
+        # print("the edges are: ", self.edges)
         a = [edge for edge in self.edges if edge[0] == current_node]
-        #print("cur node is: ", current_node, ", and the edges are:", a)
+        # print("cur node is: ", current_node, ", and the edges are:", a)
         return a
 
     def choose_action(self, current_node):
@@ -74,96 +74,11 @@ class QLearningAgent(Agent):
         """
         current_q_value = self.q_table[current_node][action]
         max_future_q = max(self.q_table[next_node].values(), default=0)
-        new_q_value = current_q_value + self.learning_rate * (reward + self.discount_factor * max_future_q - current_q_value)
+        new_q_value = current_q_value + self.learning_rate * (
+                    reward + self.discount_factor * max_future_q - current_q_value)
         self.q_table[current_node][action] = new_q_value
 
-    def find_path(self, start_node, edge_costs, episodes=1000, max_steps=100):
-        """
-        Find the optimal path using Q-learning.
-
-        :param start_node: The starting node.
-        :param edge_costs: Dictionary with edge costs {(start_node, end_node): cost}.
-        :param episodes: Number of episodes to run the Q-learning process.
-        :param max_steps: Maximum number of steps allowed per episode to prevent infinite loops.
-        """
-        visited_states = set()  # Track visited states within each episode
-
-        for episode in range(episodes):
-            current_node = start_node
-            path = []
-            visited_states.clear()  # Reset visited states for each new episode
-            steps = 0  # Step counter to prevent infinite loops
-
-            while current_node != self.goal_node:
-                # TODO:delete
-                print("Entered Q-learning")
-                steps += 1
-
-                # Break if max steps are exceeded to prevent infinite loops
-                if steps > max_steps:
-                    print(f"Exceeded max steps in episode {episode}. Breaking loop.")
-                    break
-
-                action = self.choose_action(current_node)
-                if action is None:
-                    print("No available action, breaking out of loop.")
-                    break
-
-                next_node = action[1]
-                reward = -edge_costs.get(action, float('inf'))
-
-                # Penalize revisiting states within the same episode
-                if next_node in visited_states:
-                    reward -= 1
-
-                visited_states.add(next_node)
-                self.update_q_value(current_node, action, reward, next_node)
-                current_node = next_node
-                path.append(action)
-
-                # Break if revisiting the same path repeatedly (no progress)
-                if len(path) > 2 and path[-1] == path[-2]:
-                    print(f"Detected repeated path pattern in episode {episode}. Breaking loop.")
-                    break
-
-            # Decay exploration rate over time
-            self.exploration_rate *= 0.995
-
-        print("Completed Q-learning episodes.")
-
-    def find_path1(self, start_node, edge_costs, episodes=1000):
-        visited_states = set()  # Track visited states within each episode
-
-        for episode in range(episodes):
-            current_node = start_node
-            path = []
-            visited_states.clear()  # Reset visited states for each new episode
-
-            while current_node != self.goal_node:
-                # TODO:delete
-                print("Entered Q-learning")
-                action = self.choose_action(current_node)
-                print(action)
-                if action is None:
-                    break
-
-                next_node = action[1]
-                reward = -edge_costs.get(action, float('inf'))
-
-                # Penalize revisiting states within the same episode
-                if next_node in visited_states:
-                    break  # Adjust this penalty value as needed
-
-                visited_states.add(next_node)
-                self.update_q_value(current_node, action, reward, next_node)
-                current_node = next_node
-                path.append(action)
-
-            self.exploration_rate *= 0.995  # Decay exploration rate over time
-
-        return self._exploit_path(start_node)
-
-    def find_path2(self, start_node, edge_costs, episodes=1000):
+    def find_path(self, start_node, edge_costs, episodes=100):
         """
         Find the optimal path using Q-learning by training over multiple episodes.
 
@@ -173,14 +88,18 @@ class QLearningAgent(Agent):
         :return: The learned optimal path from start to goal node.
         """
         for episode in range(episodes):
+            # TODO:delete
+            print("episode: ", episode)
             current_node = start_node
             path = []
 
             while current_node != self.goal_node:
                 # TODO:delete
-                print("Entered Q-learning")
+                print("Entered - Q-learning find path")
                 # Choose an action based on the current node
                 action = self.choose_action(current_node)
+                # TODO:delete
+                print("Q-learning action: ", action)
                 if action is None:
                     break  # No possible actions; terminate
 

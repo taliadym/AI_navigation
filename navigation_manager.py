@@ -413,14 +413,14 @@ class NavigationManager:
         sys.exit()
 
 
-# Example 1 usage
-nodes = [1, 2, 3, 4, 5, 6, 7, 8]
-edges = []
-for i in range(len(nodes)):
-    for j in range(len(nodes)):
-        coin = int(np.random.choice([0, 1]))
-        if i < j and coin == 0:
-            edges.append((nodes[i], nodes[j]))
+# # Example 1 usage
+# nodes = [1, 2, 3, 4, 5, 6, 7, 8]
+# edges = []
+# for i in range(len(nodes)):
+#     for j in range(len(nodes)):
+#         coin = int(np.random.choice([0, 1]))
+#         if i < j and coin == 0:
+#             edges.append((nodes[i], nodes[j]))
 
 # Example 2 usage
 # nodes = [1, 2, 3, 4, 5, 6, 7, 8]
@@ -456,6 +456,16 @@ for i in range(len(nodes)):
 #     edges.append((start, end))  # Edge from start to end
 #     edges.append((end, start))  # Edge from end to start
 # visualizer = NavigationManager(nodes, edges, 1, 8)
+
+# # Example 5 usage
+# nodes = [1, 2, 3, 4]
+# edges = []
+# for i in range(len(nodes)):
+#     for j in range(len(nodes)):
+#         if i < j:
+#             edges.append((nodes[i], nodes[j]))
+# visualizer = NavigationManager(nodes, edges, 1, 4)
+
 
 # Create a GraphVisualizer object and run it
 # if (1, 8) in edges:
