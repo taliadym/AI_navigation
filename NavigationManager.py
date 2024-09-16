@@ -2,9 +2,10 @@ import numpy as np
 import pygame
 import networkx as nx
 import math
-from navigation_logics import NavigationLogics
+from NavigationLogics import NavigationLogics
 import sys
 import time
+
 
 class NavigationManager:
     def __init__(self, nodes, edges, src_node, dest_node):
@@ -63,7 +64,9 @@ class NavigationManager:
             speed = self.speed_limit[edge]
             practical_speed = (1 - self.logics.traffic_index[edge]) * speed
             time = self.logics.get_time_for_crossing_edge(edge)
-            self.edge_info[edge] = f"Speed Limit: {speed}km/h, Practical speed: {round(practical_speed, 2)}km/h, Time to cross: {round(time * 60, 2)} min"
+            self.edge_info[
+                edge] = f"Speed Limit: {speed}km/h, Actual Speed: {round(practical_speed, 2)}km/h, Time to cross: {round(time * 60, 2)} min"
+
     def update_timer(self):
         # update timer
         if self.current_d_edge is not None:
@@ -84,7 +87,7 @@ class NavigationManager:
                 path_changed = True
             else:
                 for i in range(len(self.current_d_path)):
-                    if self.prev_d_path[i+1] != self.current_d_path[i]:
+                    if self.prev_d_path[i + 1] != self.current_d_path[i]:
                         path_changed = True
                         break
 
@@ -111,7 +114,7 @@ class NavigationManager:
 
         # Calculate the angle of the edge in degrees
         angle = math.degrees(math.atan2(- end_screen_pos[0] + start_screen_pos[0],
-                             - end_screen_pos[1] + start_screen_pos[1]))
+                                        - end_screen_pos[1] + start_screen_pos[1]))
 
         # Rotate the car image based on the calculated angle
         rotated_car = pygame.transform.rotate(self.car_image,
@@ -320,8 +323,8 @@ class NavigationManager:
         x2, y2 = self.to_screen(self.positions[n2])
 
         # calculate the distance between the mouse position and the middle of ths edge
-        middle_edge_x, middle_edge_y = abs((x1 + x2)/2), abs((y1 + y2)/2)
-        distance = math.sqrt((middle_edge_x - mouse_pos[0])**2 + (middle_edge_y - mouse_pos[1])**2)
+        middle_edge_x, middle_edge_y = abs((x1 + x2) / 2), abs((y1 + y2) / 2)
+        distance = math.sqrt((middle_edge_x - mouse_pos[0]) ** 2 + (middle_edge_y - mouse_pos[1]) ** 2)
         return distance < 5
 
     def draw_popup(self, edge):
@@ -338,7 +341,6 @@ class NavigationManager:
         # text_rect = text_surface.get_rect(center=popup_rect.center)
         # self.screen.blit(text_surface, text_rect)
         self.screen.blit(self.info_image, (midpoint[0] - 20, midpoint[1] - 20))
-
 
     def run(self):
         next_pressed = False
@@ -414,7 +416,7 @@ class NavigationManager:
 
 
 # # Example 1 usage
-# nodes = [1, 2, 3, 4, 5, 6, 7, 8]
+# nodes = [1, 2, 3, 4]
 # edges = []
 # for i in range(len(nodes)):
 #     for j in range(len(nodes)):
@@ -430,13 +432,13 @@ class NavigationManager:
 #     edges.append((start, end))  # Edge from start to end
 #     edges.append((end, start))  # Edge from end to start
 
-# Example 3 usage
-nodes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
-edges = []
-for i in range(len(nodes)):
-    for j in range(len(nodes)):
-        if i < j:
-            edges.append((nodes[i], nodes[j]))
+# # Example 3 usage
+# nodes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+# edges = []
+# for i in range(len(nodes)):
+#     for j in range(len(nodes)):
+#         if i < j:
+#             edges.append((nodes[i], nodes[j]))
 
 # Example 4 usage
 # nodes = [1, 2, 3, 4, 5, 6, 7, 8, 9]
@@ -466,9 +468,16 @@ for i in range(len(nodes)):
 #             edges.append((nodes[i], nodes[j]))
 # visualizer = NavigationManager(nodes, edges, 1, 4)
 
+# Example 6 usage
+nodes = [1, 2, 3, 4, 5, 6, 7, 8]
+edges = []
+for i in range(len(nodes)):
+    for j in range(len(nodes)):
+        if i < j:
+            edges.append((nodes[i], nodes[j]))
 
 # Create a GraphVisualizer object and run it
 # if (1, 8) in edges:
 #     edges.remove((1, 8))
-visualizer = NavigationManager(nodes, edges, 1, 8)
+visualizer = NavigationManager(nodes, edges, 1, 4)
 visualizer.run()
