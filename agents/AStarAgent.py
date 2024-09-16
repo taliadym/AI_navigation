@@ -1,7 +1,7 @@
 import heapq
 import math
 from collections import defaultdict
-from agents.agent import Agent, ASTAR__ZERO_H, ASTAR__ARIAL_DIST_H, ASTAR__DIJKSTRA_H, ASTAR__COMBINATION_H, ASTAR__NONADMISSIBLE_H
+from agents.agent import Agent, ASTAR__ZERO_H, ASTAR__AERIAL_DIST_H, ASTAR__DIJKSTRA_H, ASTAR__COMBINATION_H, ASTAR__NONADMISSIBLE_H
 
 
 class AStarAgent(Agent):
@@ -19,8 +19,8 @@ class AStarAgent(Agent):
         min_speed_limit = 20
         super().__init__(goal_node, edges, nodes_positions, max_speed_limit)
         self.heuristic = ZeroHeuristic()
-        if heuristic == ASTAR__ARIAL_DIST_H:
-            self.heuristic = ArialDistHeuristic(nodes_positions, max_speed_limit)
+        if heuristic == ASTAR__AERIAL_DIST_H:
+            self.heuristic = AerialDistHeuristic(nodes_positions, max_speed_limit)
         elif heuristic == ASTAR__DIJKSTRA_H:
             self.heuristic = DijkstraHeuristic(goal_node, edges, roads_length, speed_limit)
         elif heuristic == ASTAR__COMBINATION_H:
@@ -94,7 +94,7 @@ class NonAdmissibleHeuristic(Heuristic):
     def heuristic(self, start_node, goal):
         """
         the heuristic calculates the time it takes to get from node to goal under two relaxations:
-        1. there exists a direct path from node to goal with length which is exactly their arial distance
+        1. there exists a direct path from node to goal with length which is exactly their aerial distance
         2. the speed limit in that path is the minimal, and there is no traffic
         """
         node_pos = self.nodes_positions[start_node]
@@ -104,15 +104,15 @@ class NonAdmissibleHeuristic(Heuristic):
 
 class AdmissibleCombinationHeuristic(Heuristic):
     def __init__(self, nodes_positions, max_speed_limit, goal_node, edges, roads_length, speed_limit):
-        self.arial = ArialDistHeuristic(nodes_positions, max_speed_limit)
+        self.aerial = AerialDistHeuristic(nodes_positions, max_speed_limit)
         self.dijkstra = DijkstraHeuristic(goal_node, edges, roads_length, speed_limit)
 
     def heuristic(self, start_node, goal_node):
-        return 0.5 * self.arial.heuristic(start_node, goal_node) +\
+        return 0.5 * self.aerial.heuristic(start_node, goal_node) + \
                0.5 * self.dijkstra.heuristic(start_node, goal_node)
 
 
-class ArialDistHeuristic(Heuristic):
+class AerialDistHeuristic(Heuristic):
     def __init__(self, nodes_positions, max_speed_limit):
         self.nodes_positions = nodes_positions
         self.max_speed_limit = max_speed_limit
@@ -120,7 +120,7 @@ class ArialDistHeuristic(Heuristic):
     def heuristic(self, start_node, goal):
         """
         the heuristic calculates the time it takes to get from node to goal under two relaxations:
-        1. there exists a direct path from node to goal with length which is exactly their arial distance
+        1. there exists a direct path from node to goal with length which is exactly their aerial distance
         2. the speed limit in that path is the maximal, and there is no traffic
         """
         node_pos = self.nodes_positions[start_node]

@@ -5,7 +5,7 @@ import numpy as np
 
 # Define constants for column names
 ASTAR__ZERO_H = 0
-ASTAR__ARIAL_DIST_H = 1
+ASTAR__AERIAL_DIST_H = 1
 ASTAR__DIJKSTRA_H = 2
 ASTAR__COMBINATION_H = 3
 ASTAR__NONADMISSIBLE_H = 4
@@ -73,7 +73,7 @@ def create_runtime_sample_grpah(y_values):
     # plot changing traffic data
     plt.plot(x_values, y_values[ASTAR__ZERO_H + RUNTIME_SHIFT] - 1.5 * line_width, label='A star - Zero heuristic',
              color='cornflowerblue')
-    plt.plot(x_values, y_values[ASTAR__ARIAL_DIST_H + RUNTIME_SHIFT] - 1 * line_width, label='A star - Arial dist heuristic',
+    plt.plot(x_values, y_values[ASTAR__AERIAL_DIST_H + RUNTIME_SHIFT] - 1 * line_width, label='A star - Arial dist heuristic',
              color='lightgreen')
     plt.plot(x_values, y_values[ASTAR__DIJKSTRA_H + RUNTIME_SHIFT] - 0.5 * line_width, label='A star - Dijkstra heuristic',
              color='orangered')
@@ -135,7 +135,7 @@ def create_cost_sample_graph(y_values):
 
     # plot changing traffic data
     plt.plot(x_values, y_values[ASTAR__ZERO_H] - 1.5*line_width, label='changing traffic', color='cornflowerblue')
-    # plt.plot(x_values, y_values[ASTAR__ARIAL_DIST_H] - 1*line_width, label='A star - Arial dist heuristic', color='lightgreen')
+    # plt.plot(x_values, y_values[ASTAR__AERIAL_DIST_H] - 1*line_width, label='A star - Arial dist heuristic', color='lightgreen')
     # plt.plot(x_values, y_values[ASTAR__DIJKSTRA_H] - 0.5*line_width, label='A star - Dijkstra heuristic', color='orangered')
     # plt.plot(x_values, y_values[ASTAR__COMBINATION_H], label='A star - Combination heuristic', color='orange')
 
@@ -146,7 +146,7 @@ def create_cost_sample_graph(y_values):
 
     # plot min traffic data
     plt.plot(x_values, y_values[ASTAR__ZERO_H + MIN_SHIFT] - 1.5*line_width, color='cornflowerblue', linestyle='dotted', label='min traffic')
-    # plt.plot(x_values, y_values[ASTAR__ARIAL_DIST_H + MIN_SHIFT] - 1*line_width, color='lightgreen', linestyle='dotted')
+    # plt.plot(x_values, y_values[ASTAR__AERIAL_DIST_H + MIN_SHIFT] - 1*line_width, color='lightgreen', linestyle='dotted')
     # plt.plot(x_values, y_values[ASTAR__DIJKSTRA_H + MIN_SHIFT] - 0.5*line_width, color='orangered', linestyle='dotted')
     # plt.plot(x_values, y_values[ASTAR__COMBINATION_H + MIN_SHIFT], color='orange', linestyle='dotted')
     # plt.plot(x_values, y_values[ASTAR__NONADMISSIBLE_H + MIN_SHIFT] + 0.5*line_width, color='hotpink', linestyle='dotted')
@@ -154,7 +154,7 @@ def create_cost_sample_graph(y_values):
 
     # # plot max traffic data
     plt.plot(x_values, y_values[ASTAR__ZERO_H + MAX_SHIFT] - 1.5*line_width, color='cornflowerblue', linestyle='--', label='max traffic')
-    # plt.plot(x_values, y_values[ASTAR__ARIAL_DIST_H + MAX_SHIFT] - 1*line_width, color='lightgreen', linestyle='--')
+    # plt.plot(x_values, y_values[ASTAR__AERIAL_DIST_H + MAX_SHIFT] - 1*line_width, color='lightgreen', linestyle='--')
     # plt.plot(x_values, y_values[ASTAR__DIJKSTRA_H + MAX_SHIFT] - 0.5*line_width, color='orangered', linestyle='--')
     # plt.plot(x_values, y_values[ASTAR__COMBINATION_H + MAX_SHIFT], color='orange', linestyle='--')
     # plt.plot(x_values, y_values[ASTAR__NONADMISSIBLE_H + MAX_SHIFT] + 0.5*line_width, color='hotpink', linestyle='dotted')

@@ -2,7 +2,7 @@ import numpy as np
 from agents.AStarAgent import AStarAgent
 from agents.QLearningAgent import QLearningAgent
 import csv
-from agents.agent import ASTAR__ZERO_H, ASTAR__ARIAL_DIST_H, ASTAR__DIJKSTRA_H, ASTAR__COMBINATION_H, ASTAR__NONADMISSIBLE_H, QLEARNING
+from agents.agent import ASTAR__ZERO_H, ASTAR__AERIAL_DIST_H, ASTAR__DIJKSTRA_H, ASTAR__COMBINATION_H, ASTAR__NONADMISSIBLE_H, QLEARNING
 import time
 
 RESULTS_FILE = 'results_recording.csv'
@@ -73,7 +73,7 @@ class NavigationLogics:
             agents = [AStarAgent(dest_node, self.edges, nodes_positions, self.road_length, self.speed_limit,
                            ASTAR__ZERO_H),
                 AStarAgent(dest_node, self.edges, nodes_positions, self.road_length, self.speed_limit,
-                           ASTAR__ARIAL_DIST_H),
+                           ASTAR__AERIAL_DIST_H),
                 AStarAgent(dest_node, self.edges, nodes_positions, self.road_length, self.speed_limit,
                            ASTAR__DIJKSTRA_H),
                 AStarAgent(dest_node, self.edges, nodes_positions, self.road_length, self.speed_limit,
