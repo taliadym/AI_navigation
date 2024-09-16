@@ -1,11 +1,11 @@
 import heapq
 import math
 from collections import defaultdict
-from agents.agent import Agent, ASTAR__ZERO_H, ASTAR__ARIAL_DIST_H, ASTAR__DIJKSTRA_H
+from agents.agent import Agent, ASTAR__ZERO_H, ASTAR__ARIAL_DIST_H, ASTAR__DIJKSTRA_H, ASTAR__COMBINATION_H, ASTAR__NONADMISSIBLE_H
 
 
 class AStarAgent(Agent):
-    def __init__(self, goal_node, edges, nodes_positions, max_speed_limit, roads_length, speed_limit, heuristic):
+    def __init__(self, goal_node, edges, nodes_positions, roads_length, speed_limit, heuristic):
         """
         Initialize the A* agent with additional parameters needed for pathfinding.
 
@@ -14,14 +14,19 @@ class AStarAgent(Agent):
         :param edges: List of edges represented as tuples (start_node, end_node).
         :param edge_costs: Dictionary with edge costs {(start_node, end_node): cost}.
         :param nodes_positions: Dictionary of node positions {node: (x, y)}.
-        :param max_speed_limit: The maximum speed limit for heuristic calculations.
         """
+        max_speed_limit = 120
+        min_speed_limit = 20
         super().__init__(goal_node, edges, nodes_positions, max_speed_limit)
         self.heuristic = ZeroHeuristic()
         if heuristic == ASTAR__ARIAL_DIST_H:
             self.heuristic = ArialDistHeuristic(nodes_positions, max_speed_limit)
         elif heuristic == ASTAR__DIJKSTRA_H:
             self.heuristic = DijkstraHeuristic(goal_node, edges, roads_length, speed_limit)
+        elif heuristic == ASTAR__COMBINATION_H:
+            self.heuristic = AdmissibleCombinationHeuristic(nodes_positions, max_speed_limit, goal_node, edges, roads_length, speed_limit)
+        elif heuristic == ASTAR__NONADMISSIBLE_H:
+            self.heuristic = NonAdmissibleHeuristic(nodes_positions, min_speed_limit, speed_limit)
 
     def find_path(self, start_node, edge_costs):
         """Find the shortest path from the start node to the goal node using A* algorithm."""
@@ -39,8 +44,6 @@ class AStarAgent(Agent):
         visited = set()
 
         while open_set:
-            # TODO:delete
-            print("Entered - A*")
             # Pop the edge with the lowest f_cost from the priority queue
             current_f_cost, current_edge, current_g_cost, path = heapq.heappop(open_set)
 
@@ -81,6 +84,32 @@ class Heuristic():
 class ZeroHeuristic(Heuristic):
     def heuristic(self, start_node, goal):
         return 0
+
+class NonAdmissibleHeuristic(Heuristic):
+    def __init__(self, nodes_positions, min_speed_limit, speed_limit):
+        self.nodes_positions = nodes_positions
+        self.min_speed_limit = float(min_speed_limit) * 0.01
+        self.speed_limit = speed_limit
+
+    def heuristic(self, start_node, goal):
+        """
+        the heuristic calculates the time it takes to get from node to goal under two relaxations:
+        1. there exists a direct path from node to goal with length which is exactly their arial distance
+        2. the speed limit in that path is the minimal, and there is no traffic
+        """
+        node_pos = self.nodes_positions[start_node]
+        goal_pos = self.nodes_positions[goal]
+        distance = math.sqrt((node_pos[0] - goal_pos[0]) ** 2 + (node_pos[1] - goal_pos[1]) ** 2)
+        return distance / self.min_speed_limit
+
+class AdmissibleCombinationHeuristic(Heuristic):
+    def __init__(self, nodes_positions, max_speed_limit, goal_node, edges, roads_length, speed_limit):
+        self.arial = ArialDistHeuristic(nodes_positions, max_speed_limit)
+        self.dijkstra = DijkstraHeuristic(goal_node, edges, roads_length, speed_limit)
+
+    def heuristic(self, start_node, goal_node):
+        return 0.5 * self.arial.heuristic(start_node, goal_node) +\
+               0.5 * self.dijkstra.heuristic(start_node, goal_node)
 
 
 class ArialDistHeuristic(Heuristic):

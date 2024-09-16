@@ -1,11 +1,12 @@
 import random
 from collections import defaultdict
 from agents.agent import Agent
+import numpy as np
 
 
 class QLearningAgent(Agent):
-    def __init__(self, goal_node, edges, nodes_positions, max_speed_limit, learning_rate=0.1, discount_factor=0.9,
-                 exploration_rate=0.2):
+    def __init__(self, goal_node, edges, nodes_positions, max_speed_limit, learning_rate=0.9, discount_factor=0.9,
+                 exploration_rate=0.1):
         """
         Initialize the Q-learning agent with parameters for learning.
 
@@ -27,7 +28,6 @@ class QLearningAgent(Agent):
         self.learning_rate = learning_rate
         self.discount_factor = discount_factor
         self.exploration_rate = exploration_rate
-
     def get_possible_actions(self, current_node):
         """
         Get all possible actions (edges) from the current node.
@@ -87,19 +87,14 @@ class QLearningAgent(Agent):
         :param episodes: The number of episodes for training.
         :return: The learned optimal path from start to goal node.
         """
+
         for episode in range(episodes):
-            # TODO:delete
-            print("episode: ", episode)
             current_node = start_node
             path = []
 
             while current_node != self.goal_node:
-                # TODO:delete
-                print("Entered - Q-learning find path")
                 # Choose an action based on the current node
                 action = self.choose_action(current_node)
-                # TODO:delete
-                print("Q-learning action: ", action)
                 if action is None:
                     break  # No possible actions; terminate
 
@@ -130,8 +125,6 @@ class QLearningAgent(Agent):
         path = []
 
         while current_node != self.goal_node:
-            # TODO:delete
-            print("Entered - Q-learning exploit")
             action = self.choose_action(current_node)
             if action is None:
                 break

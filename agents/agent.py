@@ -2,7 +2,9 @@
 ASTAR__ZERO_H = 0
 ASTAR__ARIAL_DIST_H = 1
 ASTAR__DIJKSTRA_H = 2
-QLEARNING = 3
+ASTAR__COMBINATION_H = 3
+ASTAR__NONADMISSIBLE_H = 4
+QLEARNING = 5
 
 class Agent:
     def __init__(self, goal_node, edges, nodes_positions, max_speed_limit):

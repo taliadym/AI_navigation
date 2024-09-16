@@ -2,10 +2,11 @@ import numpy as np
 from agents.AStarAgent import AStarAgent
 from agents.QLearningAgent import QLearningAgent
 import csv
-from agents.agent import ASTAR__ZERO_H, ASTAR__ARIAL_DIST_H, ASTAR__DIJKSTRA_H, QLEARNING
+from agents.agent import ASTAR__ZERO_H, ASTAR__ARIAL_DIST_H, ASTAR__DIJKSTRA_H, ASTAR__COMBINATION_H, ASTAR__NONADMISSIBLE_H, QLEARNING
 import time
 
 RESULTS_FILE = 'results_recording.csv'
+QLEARNING_RESULT_FILE = 'Qlearning_parameter_results.csv'
 speed_limits = [20, 40, 80, 90, 120]
 max_speed_limit = max(speed_limits)
 
@@ -24,8 +25,8 @@ def add_row_to_csv(row, file_path):
 
 
 class NavigationLogics:
-    def __init__(self, nodes, edges, src_node, dest_node, nodes_positions, results_file=RESULTS_FILE, agent_enum=3,
-                 run_all_algos=True):
+    def __init__(self, nodes, edges, src_node, dest_node, nodes_positions, agent_enum=0,
+                 run_all_algos=True, Qlearning_analysis=False):
         self.nodes = nodes
         self.undirected_edges = edges
         self.src_node = src_node
@@ -64,45 +65,42 @@ class NavigationLogics:
             self.road_length[opposite_edge] = self.road_length[edge]
             self.traffic_index[opposite_edge] = self.traffic_index[edge]
 
-        # all agents will be recorded,
-        # but only the path according to agent_enum will be shown on gui and forwarded to manager
-        self.agents = [
-            # *** agents for changing costs ***
-            AStarAgent(dest_node, self.edges, nodes_positions, max_speed_limit, self.road_length, self.speed_limit,
-                       ASTAR__ZERO_H),
-            AStarAgent(dest_node, self.edges, nodes_positions, max_speed_limit, self.road_length, self.speed_limit,
-                       ASTAR__ARIAL_DIST_H),
-            AStarAgent(dest_node, self.edges, nodes_positions, max_speed_limit, self.road_length, self.speed_limit,
-                       ASTAR__DIJKSTRA_H),
-            QLearningAgent(dest_node, self.edges, nodes_positions, max_speed_limit),
-            # *** agents for mean costs ***
-            AStarAgent(dest_node, self.edges, nodes_positions, max_speed_limit, self.road_length, self.speed_limit,
-                       ASTAR__ZERO_H),
-            AStarAgent(dest_node, self.edges, nodes_positions, max_speed_limit, self.road_length, self.speed_limit,
-                       ASTAR__ARIAL_DIST_H),
-            AStarAgent(dest_node, self.edges, nodes_positions, max_speed_limit, self.road_length, self.speed_limit,
-                       ASTAR__DIJKSTRA_H),
-            QLearningAgent(dest_node, self.edges, nodes_positions, max_speed_limit),
-            # *** agents for min costs ***
-            AStarAgent(dest_node, self.edges, nodes_positions, max_speed_limit, self.road_length, self.speed_limit,
-                       ASTAR__ZERO_H),
-            AStarAgent(dest_node, self.edges, nodes_positions, max_speed_limit, self.road_length, self.speed_limit,
-                       ASTAR__ARIAL_DIST_H),
-            AStarAgent(dest_node, self.edges, nodes_positions, max_speed_limit, self.road_length, self.speed_limit,
-                       ASTAR__DIJKSTRA_H),
-            QLearningAgent(dest_node, self.edges, nodes_positions, max_speed_limit),
-            # *** agents for max costs ***
-            AStarAgent(dest_node, self.edges, nodes_positions, max_speed_limit, self.road_length, self.speed_limit,
-                       ASTAR__ZERO_H),
-            AStarAgent(dest_node, self.edges, nodes_positions, max_speed_limit, self.road_length, self.speed_limit,
-                       ASTAR__ARIAL_DIST_H),
-            AStarAgent(dest_node, self.edges, nodes_positions, max_speed_limit, self.road_length, self.speed_limit,
-                       ASTAR__DIJKSTRA_H),
-            QLearningAgent(dest_node, self.edges, nodes_positions, max_speed_limit)
-        ]
+        self.Qlearning_analysis = Qlearning_analysis
+
+        if not self.Qlearning_analysis:
+            # all agents will be recorded,
+            # but only the path according to agent_enum will be shown on gui and forwarded to manager
+            agents = [AStarAgent(dest_node, self.edges, nodes_positions, self.road_length, self.speed_limit,
+                           ASTAR__ZERO_H),
+                AStarAgent(dest_node, self.edges, nodes_positions, self.road_length, self.speed_limit,
+                           ASTAR__ARIAL_DIST_H),
+                AStarAgent(dest_node, self.edges, nodes_positions, self.road_length, self.speed_limit,
+                           ASTAR__DIJKSTRA_H),
+                AStarAgent(dest_node, self.edges, nodes_positions, self.road_length, self.speed_limit,
+                         ASTAR__COMBINATION_H),
+                AStarAgent(dest_node, self.edges, nodes_positions, self.road_length, self.speed_limit,
+                         ASTAR__NONADMISSIBLE_H),
+                QLearningAgent(dest_node, self.edges, nodes_positions, max_speed_limit)]
+
+            # *** agents for changing costs, mean costs, min costs, max costs ***
+            self.agents = agents + \
+                          agents + \
+                          agents + \
+                          agents
+            self.num_of_different_agents = 6
+
+        else:
+            self.agents = [
+                QLearningAgent(dest_node, self.edges, nodes_positions, max_speed_limit, learning_rate=0.4),
+                QLearningAgent(dest_node, self.edges, nodes_positions, max_speed_limit, learning_rate=0.5),
+                QLearningAgent(dest_node, self.edges, nodes_positions, max_speed_limit, learning_rate=0.6),
+                QLearningAgent(dest_node, self.edges, nodes_positions, max_speed_limit, learning_rate=0.7),
+                QLearningAgent(dest_node, self.edges, nodes_positions, max_speed_limit, learning_rate=0.8),
+                QLearningAgent(dest_node, self.edges, nodes_positions, max_speed_limit, learning_rate=0.9)
+            ]
+            self.num_of_different_agents = 6
 
         self.agent_enum = agent_enum
-        self.num_of_different_agents = 4
 
         if not run_all_algos:
             # agents is a list of only the single desired agent
@@ -123,7 +121,8 @@ class NavigationLogics:
         self.agent_current_node = [self.src_node for _ in self.agents]
         self.agent_total_path_cost = [0 for _ in self.agents]
         self.agent_total_running_time = [0 for _ in range(self.num_of_different_agents)]
-        self.results_file = results_file
+        self.results_file = RESULTS_FILE
+        self.qlearning_results_file = QLEARNING_RESULT_FILE
         self.calculate_paths_only_once = True
         self.edge_traffic_min = {
             edge: max(MIN_TRAFFIC_INDEX, self.edge_traffic_mean[edge] - 2 * self.edge_traffic_std[edge]) for edge in
@@ -173,6 +172,35 @@ class NavigationLogics:
 
         add_row_to_csv(row, self.results_file)
 
+        # record Q learning for different parameters
+        self.record_Q_learning()
+
+    def record_Q_learning(self):
+        row = {}
+        n = len(self.agents)
+
+        # update with remaining cost
+        for i in range(self.num_of_different_agents):
+
+            if self.agent_current_d_paths[i] is None:
+                continue
+
+            m = len(self.agent_current_d_paths[i])
+            if m < 1:
+                continue
+
+            for j in range(1, m):
+                self.agent_total_path_cost[i] += self.get_time_for_crossing_edge(
+                    self.agent_current_d_paths[i][j])
+
+        # fill row with agents results
+        for i in range(n):
+            row[str(i)] = round(60 * self.agent_total_path_cost[i], 2)
+
+        for i in range(self.num_of_different_agents):
+            row[str(i + n)] = self.agent_total_running_time[i]
+        add_row_to_csv(row, self.qlearning_results_file)
+
     def find_path_of_all_agents(self, changing_time_cost, mean_time_cost, min_time_cost, max_time_cost):
 
         for i in range(self.num_of_different_agents):
@@ -195,7 +223,7 @@ class NavigationLogics:
             # update algo running time
             self.agent_total_running_time[i] += end_time - start_time
 
-            if self.calculate_paths_only_once:
+            if self.calculate_paths_only_once and not self.Qlearning_analysis:
                 # ****** mean costs ******
                 shift = self.num_of_different_agents
                 # update path

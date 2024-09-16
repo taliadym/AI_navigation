@@ -7,11 +7,13 @@ import sys
 import time
 
 class NavigationManager:
-    def __init__(self, nodes, edges, src_node, dest_node):
+    def __init__(self, nodes, edges, src_node, dest_node, agent_enum):
         self.nodes = nodes
         self.edges = edges
         self.src_node = src_node
         self.dest_node = dest_node
+
+        self.agent_enum = agent_enum
 
         # Initialize pygame and set up the display
         pygame.init()
@@ -53,7 +55,7 @@ class NavigationManager:
         self.est_time = None
         self.prev_est_time = None
         self.prev_d_path = None
-        self.logics = NavigationLogics(self.nodes, self.edges, self.src_node, self.dest_node, self.positions)
+        self.logics = NavigationLogics(self.nodes, self.edges, self.src_node, self.dest_node, self.positions, agent_enum=self.agent_enum)
         self.popup_edge = None
         self.speed_limit = self.logics.speed_limit
         self.edge_info = {edge: "" for edge in self.edges}
@@ -414,13 +416,13 @@ class NavigationManager:
 
 
 # # Example 1 usage
-# nodes = [1, 2, 3, 4, 5, 6, 7, 8]
-# edges = []
-# for i in range(len(nodes)):
-#     for j in range(len(nodes)):
-#         coin = int(np.random.choice([0, 1]))
-#         if i < j and coin == 0:
-#             edges.append((nodes[i], nodes[j]))
+nodes = [1, 2, 3, 4, 5, 6, 7, 8]
+edges = []
+for i in range(len(nodes)):
+    for j in range(len(nodes)):
+        coin = int(np.random.choice([0, 1]))
+        if i < j and coin == 0:
+            edges.append((nodes[i], nodes[j]))
 
 # Example 2 usage
 # nodes = [1, 2, 3, 4, 5, 6, 7, 8]
@@ -431,14 +433,14 @@ class NavigationManager:
 #     edges.append((end, start))  # Edge from end to start
 
 # Example 3 usage
-nodes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
-edges = []
-for i in range(len(nodes)):
-    for j in range(len(nodes)):
-        if i < j:
-            edges.append((nodes[i], nodes[j]))
+# nodes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+# edges = []
+# for i in range(len(nodes)):
+#     for j in range(len(nodes)):
+#         if i < j:
+#             edges.append((nodes[i], nodes[j]))
 
-# Example 4 usage
+# # Example 4 usage
 # nodes = [1, 2, 3, 4, 5, 6, 7, 8, 9]
 # edges = []
 # pairs = [
@@ -467,8 +469,28 @@ for i in range(len(nodes)):
 # visualizer = NavigationManager(nodes, edges, 1, 4)
 
 
-# Create a GraphVisualizer object and run it
+# # Create a GraphVisualizer object and run it
 # if (1, 8) in edges:
 #     edges.remove((1, 8))
-visualizer = NavigationManager(nodes, edges, 1, 8)
-visualizer.run()
+
+def run_random_graph():
+    i = np.random.choice(25) + 2
+    nodes = [j for j in range(i)]
+    edges = []
+    for i in range(len(nodes)):
+        for j in range(len(nodes)):
+            coin = int(np.random.choice([0, 1]))
+            if i < j and coin == 0:
+                edges.append((nodes[i], nodes[j]))
+
+    src = np.random.choice(nodes)
+    nodes.remove(src)
+    dest = np.random.choice(nodes)
+    nodes.append(src)
+
+    if (src, dest) not in edges:
+        edges.append((src, dest))
+
+    return nodes, edges, src, dest
+
+
