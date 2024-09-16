@@ -2,9 +2,10 @@ import numpy as np
 import pygame
 import networkx as nx
 import math
-from navigation_logics import NavigationLogics
+from NavigationLogics import NavigationLogics
 import sys
 import time
+
 
 class NavigationManager:
     def __init__(self, nodes, edges, src_node, dest_node, agent_enum):
@@ -65,7 +66,9 @@ class NavigationManager:
             speed = self.speed_limit[edge]
             practical_speed = (1 - self.logics.traffic_index[edge]) * speed
             time = self.logics.get_time_for_crossing_edge(edge)
-            self.edge_info[edge] = f"Speed Limit: {speed}km/h, Practical speed: {round(practical_speed, 2)}km/h, Time to cross: {round(time * 60, 2)} min"
+            self.edge_info[
+                edge] = f"Speed Limit: {speed}km/h, Actual Speed: {round(practical_speed, 2)}km/h, Time to cross: {round(time * 60, 2)} min"
+
     def update_timer(self):
         # update timer
         if self.current_d_edge is not None:
@@ -86,7 +89,7 @@ class NavigationManager:
                 path_changed = True
             else:
                 for i in range(len(self.current_d_path)):
-                    if self.prev_d_path[i+1] != self.current_d_path[i]:
+                    if self.prev_d_path[i + 1] != self.current_d_path[i]:
                         path_changed = True
                         break
 
@@ -113,7 +116,7 @@ class NavigationManager:
 
         # Calculate the angle of the edge in degrees
         angle = math.degrees(math.atan2(- end_screen_pos[0] + start_screen_pos[0],
-                             - end_screen_pos[1] + start_screen_pos[1]))
+                                        - end_screen_pos[1] + start_screen_pos[1]))
 
         # Rotate the car image based on the calculated angle
         rotated_car = pygame.transform.rotate(self.car_image,
@@ -416,13 +419,13 @@ class NavigationManager:
 
 
 # # Example 1 usage
-nodes = [1, 2, 3, 4, 5, 6, 7, 8]
-edges = []
-for i in range(len(nodes)):
-    for j in range(len(nodes)):
-        coin = int(np.random.choice([0, 1]))
-        if i < j and coin == 0:
-            edges.append((nodes[i], nodes[j]))
+# nodes = [1, 2, 3, 4, 5, 6, 7, 8]
+# edges = []
+# for i in range(len(nodes)):
+#     for j in range(len(nodes)):
+#         coin = int(np.random.choice([0, 1]))
+#         if i < j and coin == 0:
+#             edges.append((nodes[i], nodes[j]))
 
 # Example 2 usage
 # nodes = [1, 2, 3, 4, 5, 6, 7, 8]
@@ -440,7 +443,7 @@ for i in range(len(nodes)):
 #         if i < j:
 #             edges.append((nodes[i], nodes[j]))
 
-# # Example 4 usage
+# Example 4 usage
 # nodes = [1, 2, 3, 4, 5, 6, 7, 8, 9]
 # edges = []
 # pairs = [
@@ -469,7 +472,7 @@ for i in range(len(nodes)):
 # visualizer = NavigationManager(nodes, edges, 1, 4)
 
 
-# # Create a GraphVisualizer object and run it
+# Create a GraphVisualizer object and run it
 # if (1, 8) in edges:
 #     edges.remove((1, 8))
 
